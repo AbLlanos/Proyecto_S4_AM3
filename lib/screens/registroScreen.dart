@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/screens/loginScreen.dart';
 
 class registroScreen extends StatelessWidget {
   const registroScreen({super.key});
@@ -11,14 +12,12 @@ class registroScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Registro',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
         ),
         backgroundColor: primaryPurple,
         elevation: 0,
       ),
+
       // backgroundColor eliminado, ahora usamos imagen en el body
       body: Stack(
         children: [
@@ -33,91 +32,114 @@ class registroScreen extends StatelessWidget {
               ),
             ),
             child: Container(
-              color: Color(0xAA000000), // overlay oscuro para que se lean los campos
+              color: const Color(0xAA000000),
             ),
           ),
 
-          // Contenido del formulario
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: const Text(
-                    'Debe llenar los siguientes campos',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Color.fromARGB(179, 255, 255, 255),
+          // Formulario SIEMPRE CENTRADO
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.stretch, 
+                  children: [
+                    const Text(
+                      'Debe llenar los siguientes campos',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Color.fromARGB(179, 255, 255, 255),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                const _CampoTexto(
-                  label: 'Nombre',
-                  icon: Icons.person,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(label: 'Nombre', icon: Icons.person),
+                    const SizedBox(height: 12),
 
-                const _CampoTexto(
-                  label: 'Apellido',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(
+                      label: 'Apellido',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: 12),
 
-                const _CampoTexto(
-                  label: 'Correo electrónico',
-                  icon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(
+                      label: 'Correo electrónico',
+                      icon: Icons.email,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
 
-                const _CampoTexto(
-                  label: 'Contraseña',
-                  icon: Icons.lock,
-                  obscure: true,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(
+                      label: 'Contraseña',
+                      icon: Icons.lock,
+                      obscure: true,
+                    ),
+                    const SizedBox(height: 12),
 
-                const _CampoTexto(
-                  label: 'Teléfono',
-                  icon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(
+                      label: 'Teléfono',
+                      icon: Icons.phone,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
 
-                const _CampoTexto(
-                  label: 'País',
-                  icon: Icons.public,
-                ),
-                const SizedBox(height: 12),
+                    const _CampoTexto(label: 'País', icon: Icons.public),
+                    const SizedBox(height: 12),
 
-                _FechaNacimientoField(color: primaryPurple),
-                const SizedBox(height: 24),
+                    _FechaNacimientoField(color: primaryPurple),
+                    const SizedBox(height: 24),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(218, 66, 10, 66),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    SizedBox(
+                      height: 50,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            218,
+                            66,
+                            10,
+                            66,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => irPantallaLogin(context),
+                        child: const Text(
+                          'Registrarse',
+                          style: TextStyle(fontSize: 18),
+                        ),
                       ),
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Registro enviado')),
-                      );
-                    },
-                    child: const Text(
-                      'Registrarse',
-                      style: TextStyle(fontSize: 18),
+
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Ya tienes una cuenta?",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  irPantallaLoginRegistrado(context),
+                              child: const Text(
+                                "Iniciar sesión",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -126,8 +148,6 @@ class registroScreen extends StatelessWidget {
   }
 }
 
-
-// ------------ Widgets reutilizables ------------
 
 class _CampoTexto extends StatelessWidget {
   final String label;
@@ -232,4 +252,18 @@ class _FechaNacimientoFieldState extends State<_FechaNacimientoField> {
       ),
     );
   }
+}
+
+void irPantallaLogin(context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => loginScreen()),
+  );
+}
+
+void irPantallaLoginRegistrado(context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => loginScreen()),
+  );
 }

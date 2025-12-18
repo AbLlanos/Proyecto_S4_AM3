@@ -41,6 +41,48 @@ class WelcomeScreen extends StatelessWidget {
         ),
       ),
     ),
+
+    drawer: Drawer(
+      child: ListView(
+        children: [
+          Container(
+            padding: EdgeInsets.all(16),
+            color: Colors.purple[100], 
+            child: Center(
+              child: Text(
+                "VixDocumentary",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple[800],
+                ),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.login, color: Colors.purple), 
+            title: Text("Login"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => loginScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.video_library, color: Colors.purple),
+            title: Text("Registrarse"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => registroScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+    ),
+
     body: Stack(
       children: [
         // FONDO
