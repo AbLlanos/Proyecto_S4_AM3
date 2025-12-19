@@ -47,7 +47,7 @@ class WelcomeScreen extends StatelessWidget {
         children: [
           Container(
             padding: EdgeInsets.all(16),
-            color: Colors.purple[100], 
+            color: Colors.purple[100],
             child: Center(
               child: Text(
                 "VixDocumentary",
@@ -60,7 +60,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.login, color: Colors.purple), 
+            leading: Icon(Icons.login, color: Colors.purple),
             title: Text("Login"),
             onTap: () {
               Navigator.push(
@@ -106,18 +106,22 @@ class WelcomeScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
-                  children: const [
-                    Text(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // ← ALINEA COLUMNA AL CENTRO
+                  children: [
+                    const Text(
                       '¡Bienvenido a VixDocumentary!',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 10),
+                    const Text(
                       'Tu mundo de documentales favoritas',
+                      textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16, color: Colors.white70),
                     ),
                   ],
@@ -379,7 +383,7 @@ class TrendImage extends StatelessWidget {
   );
 }
 
-// Widget para recomendaciones (2x2 grid)
+// Widget para recomendaciones
 class RecoImage extends StatelessWidget {
   final String url;
   final String titulo;
