@@ -35,7 +35,7 @@ class registroScreen extends StatelessWidget {
 
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 350),
                 padding: const EdgeInsets.all(24),
@@ -77,155 +77,157 @@ Widget formularioRegistro(context) {
   const Color fieldColor = Color.fromARGB(197, 116, 116, 116);
   const Color labelColor = Colors.white;
 
-  return Column(
-    children: [
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
+  return SingleChildScrollView( 
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+
+        Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Center(
             child: Text(
               "Debe llenar los siguientes espacios obligatoriamente",
-              style: TextStyle(fontSize: 20, color: Colors.amber[50]),
+              style: TextStyle(fontSize: 18, color: Colors.amber[50]), 
               textAlign: TextAlign.center,
             ),
           ),
-        ],
-      ),
-      Text(""),
-
-      TextField(
-        controller: nombre,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.person, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese el nombre",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
         ),
-      ),
-      Text(""),
 
-      TextField(
-        controller: apellido,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese el apellido",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      TextField(
-        controller: correo,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.email, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese el correo electrónico",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      TextField(
-        controller: contrasenia,
-        obscureText: true,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.lock, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese la contraseña",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      TextField(
-        controller: telefono,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.phone, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese el telefono",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      TextField(
-        controller: pais,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.public, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese el pais",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      TextField(
-        controller: fechaNacimiento,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.calendar_today, color: Colors.white70),
-          border: OutlineInputBorder(),
-          labelText: "Ingrese la fecha de nacimiento",
-          labelStyle: TextStyle(color: labelColor),
-          filled: true,
-          fillColor: fieldColor,
-        ),
-      ),
-      Text(""),
-
-      SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () => RegistroVixUsuario(correo, contrasenia, context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(
-              255,
-              110,
-              31,
-              93,
-            ),
+        // NOMBRE
+        TextField(
+          controller: nombre,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.person, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Nombre",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
           ),
-          child: const Text('Registrarse', style: TextStyle(color: labelColor),),
         ),
-      ),
+        const SizedBox(height: 12),  // ← Espaciado reducido
 
-      Text(""),
+        // APELLIDO
+        TextField(
+          controller: apellido,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Apellido",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 12),
 
-      Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Ya tienes una cuenta?",
-              style: TextStyle(color: Colors.white),
+        // CORREO
+        TextField(
+          controller: correo,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.email, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Correo electrónico",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // CONTRASEÑA
+        TextField(
+          controller: contrasenia,
+          obscureText: true,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.lock, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Contraseña",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // TELÉFONO
+        TextField(
+          controller: telefono,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.phone, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Teléfono",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // PAÍS
+        TextField(
+          controller: pais,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.public, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "País",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // FECHA
+        TextField(
+          controller: fechaNacimiento,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.calendar_today, color: Colors.white70),
+            border: OutlineInputBorder(),
+            labelText: "Fecha de nacimiento",
+            labelStyle: TextStyle(color: labelColor),
+            filled: true,
+            fillColor: fieldColor,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // BOTÓN
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => RegistroVixUsuario(correo, contrasenia, context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 110, 31, 93),
             ),
-            TextButton(
-              onPressed: () => irPantallaLoginRegistrado(context),
-              child: const Text(
-                "Iniciar sesión",
-                style: TextStyle(color: Color.fromARGB(255, 167, 45, 158)),
+            child: const Text('Registrarse', style: TextStyle(color: labelColor)),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // LINK LOGIN
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Ya tienes una cuenta? ", style: TextStyle(color: Colors.white)),
+              TextButton(
+                onPressed: () => irPantallaLoginRegistrado(context),
+                child: const Text(
+                  "Iniciar sesión",
+                  style: TextStyle(color: Color.fromARGB(255, 167, 45, 158)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    ],
+        const SizedBox(height: 20),
+      ],
+    ),
   );
 }
+
 
 
 Future<void> RegistroVixUsuario(correo, contrasenia, context) async {

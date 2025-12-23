@@ -9,6 +9,7 @@ class loginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,  // ← EVITA overflow del teclado
       appBar: AppBar(
         title: const Text(
           'Iniciar sesión',
@@ -29,7 +30,6 @@ class Cuerpo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Fondo con imagen CORREGIDO
         Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -44,11 +44,10 @@ class Cuerpo extends StatelessWidget {
 
         Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 50),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: formularioRegistro(context),
           ),
         ),
-        
       ],
     );
   }
@@ -78,36 +77,29 @@ Widget formularioRegistro(context) {
   const Color labelColor = Colors.white;
 
   return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    mainAxisSize: MainAxisSize.min,
     children: [
-
-      Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 100),
-          child: const Text(
-            "Vix Documentary",
-            style: TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+      const Center(
+        child: Text(
+          "VixDocumentary",
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),
+      const SizedBox(height: 20),
 
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Text(
-              "Debe llenar los siguientes espacios obligatoriamente",
-              style: TextStyle(fontSize: 20, color: Colors.amber[50]),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
+      const Center(
+        child: Text(
+          "Debe llenar los siguientes espacios obligatoriamente",
+          style: TextStyle(fontSize: 20, color: Color.fromRGBO(226, 226, 226, 1)),
+          textAlign: TextAlign.center,
+        ),
       ),
-      Text(""),
+      const SizedBox(height: 32),
 
       TextField(
         controller: correoUsuario,
@@ -120,7 +112,7 @@ Widget formularioRegistro(context) {
           fillColor: fieldColor,
         ),
       ),
-      Text(""),
+      const SizedBox(height: 20),
 
       TextField(
         controller: contraseniaUsuario,
@@ -139,8 +131,7 @@ Widget formularioRegistro(context) {
       SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () =>
-              loginVixUsuario(correoUsuario, contraseniaUsuario, context),
+          onPressed: () => loginVixUsuario(correoUsuario, contraseniaUsuario, context),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 110, 31, 93),
           ),
