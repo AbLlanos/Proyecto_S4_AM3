@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/screens/catalogoScreen.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
 import 'package:proyecto_s4_am3/screens/registroScreen.dart';
 
-void main() => runApp(const VixDocumentaryApp());
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const VixDocumentaryApp());
+}
 
 class VixDocumentaryApp extends StatelessWidget {
   const VixDocumentaryApp({super.key});
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  Widget build(BuildContext context) => 
+  MaterialApp(
+
+    routes: {
+      '/login': (context) => loginScreen(),
+      '/registro': (context) => registroScreen(),
+      '/catalogo': (context) => catalogoScreen(),
+    },
+
+
     title: 'VixDocumentary',
     home: const WelcomeScreen(),
     debugShowCheckedModeBanner: false,
@@ -42,6 +59,7 @@ class WelcomeScreen extends StatelessWidget {
       ),
     ),
 
+    //Drawer
     drawer: Drawer(
       child: ListView(
         children: [
@@ -82,6 +100,9 @@ class WelcomeScreen extends StatelessWidget {
         ],
       ),
     ),
+
+
+
 
     body: Stack(
       children: [

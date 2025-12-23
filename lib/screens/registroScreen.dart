@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
 
@@ -17,8 +18,6 @@ class registroScreen extends StatelessWidget {
         backgroundColor: primaryPurple,
         elevation: 0,
       ),
-
-      // backgroundColor eliminado, ahora usamos imagen en el body
       body: Stack(
         children: [
           // Fondo con imagen
@@ -31,224 +30,20 @@ class registroScreen extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-            child: Container(
-              color: const Color(0xAA000000),
-            ),
+            child: Container(color: const Color(0xAA000000)),
           ),
 
-          // Formulario SIEMPRE CENTRADO
           Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch, 
-                  children: [
-                    const Text(
-                      'Debe llenar los siguientes campos',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Color.fromARGB(179, 255, 255, 255),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-
-                    const _CampoTexto(label: 'Nombre', icon: Icons.person),
-                    const SizedBox(height: 12),
-
-                    const _CampoTexto(
-                      label: 'Apellido',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 12),
-
-                    const _CampoTexto(
-                      label: 'Correo electrónico',
-                      icon: Icons.email,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 12),
-
-                    const _CampoTexto(
-                      label: 'Contraseña',
-                      icon: Icons.lock,
-                      obscure: true,
-                    ),
-                    const SizedBox(height: 12),
-
-                    const _CampoTexto(
-                      label: 'Teléfono',
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 12),
-
-                    const _CampoTexto(label: 'País', icon: Icons.public),
-                    const SizedBox(height: 12),
-
-                    _FechaNacimientoField(color: primaryPurple),
-                    const SizedBox(height: 24),
-
-                    SizedBox(
-                      height: 50,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            218,
-                            66,
-                            10,
-                            66,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () => irPantallaLogin(context),
-                        child: const Text(
-                          'Registrarse',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Ya tienes una cuenta?",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  irPantallaLoginRegistrado(context),
-                              child: const Text(
-                                "Iniciar sesión",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 350),
+                padding: const EdgeInsets.all(24),
+                child: formularioRegistro(context),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-
-class _CampoTexto extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool obscure;
-  final TextInputType? keyboardType;
-
-  const _CampoTexto({
-    required this.label,
-    required this.icon,
-    this.obscure = false,
-    this.keyboardType,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      obscureText: obscure,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
-        prefixIcon: Icon(icon, color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white24),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.purpleAccent),
-        ),
-        filled: true,
-        fillColor: const Color(0xFF1E1E1E),
-      ),
-    );
-  }
-}
-
-class _FechaNacimientoField extends StatefulWidget {
-  final Color color;
-  const _FechaNacimientoField({required this.color});
-
-  @override
-  State<_FechaNacimientoField> createState() => _FechaNacimientoFieldState();
-}
-
-class _FechaNacimientoFieldState extends State<_FechaNacimientoField> {
-  final TextEditingController _controller = TextEditingController();
-
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year - 18, now.month, now.day),
-      firstDate: DateTime(1900),
-      lastDate: now,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: widget.color,
-              onPrimary: Colors.white,
-              surface: const Color(0xFF1E1E1E),
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        _controller.text =
-            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      readOnly: true,
-      style: const TextStyle(color: Colors.white),
-      onTap: _pickDate,
-      decoration: InputDecoration(
-        labelText: 'Fecha de nacimiento',
-        labelStyle: const TextStyle(color: Colors.white70),
-        prefixIcon: const Icon(Icons.cake, color: Colors.white70),
-        suffixIcon: const Icon(Icons.calendar_today, color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white24),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: widget.color),
-        ),
-        filled: true,
-        fillColor: const Color(0xFF1E1E1E),
       ),
     );
   }
@@ -266,4 +61,247 @@ void irPantallaLoginRegistrado(context) {
     context,
     MaterialPageRoute(builder: (context) => loginScreen()),
   );
+}
+
+//Funcion de registro
+
+Widget formularioRegistro(context) {
+  TextEditingController nombre = TextEditingController();
+  TextEditingController apellido = TextEditingController();
+  TextEditingController correo = TextEditingController();
+  TextEditingController telefono = TextEditingController();
+  TextEditingController contrasenia = TextEditingController();
+  TextEditingController pais = TextEditingController();
+  TextEditingController fechaNacimiento = TextEditingController();
+
+  const Color fieldColor = Color.fromARGB(197, 116, 116, 116);
+  const Color labelColor = Colors.white;
+
+  return Column(
+    children: [
+      Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: Text(
+              "Debe llenar los siguientes espacios obligatoriamente",
+              style: TextStyle(fontSize: 20, color: Colors.amber[50]),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+      Text(""),
+
+      TextField(
+        controller: nombre,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.person, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese el nombre",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: apellido,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese el apellido",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: correo,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.email, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese el correo electrónico",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: contrasenia,
+        obscureText: true,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.lock, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese la contraseña",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: telefono,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.phone, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese el telefono",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: pais,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.public, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese el pais",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      TextField(
+        controller: fechaNacimiento,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.calendar_today, color: Colors.white70),
+          border: OutlineInputBorder(),
+          labelText: "Ingrese la fecha de nacimiento",
+          labelStyle: TextStyle(color: labelColor),
+          filled: true,
+          fillColor: fieldColor,
+        ),
+      ),
+      Text(""),
+
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => RegistroVixUsuario(correo, contrasenia, context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(
+              255,
+              110,
+              31,
+              93,
+            ),
+          ),
+          child: const Text('Registrarse', style: TextStyle(color: labelColor),),
+        ),
+      ),
+
+      Text(""),
+
+      Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Ya tienes una cuenta?",
+              style: TextStyle(color: Colors.white),
+            ),
+            TextButton(
+              onPressed: () => irPantallaLoginRegistrado(context),
+              child: const Text(
+                "Iniciar sesión",
+                style: TextStyle(color: Color.fromARGB(255, 167, 45, 158)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+
+Future<void> RegistroVixUsuario(correo, contrasenia, context) async {
+  if (correo.text.isEmpty || contrasenia.text.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Por favor complete todos los campos'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+    return;
+  }
+
+  try {
+    final credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+          email: correo.text.trim(),
+          password: contrasenia.text.trim(),
+        );
+
+    Navigator.pushNamed(context, '/login');
+  } on FirebaseAuthException catch (e) {
+    String mensaje = 'Error desconocido';
+    switch (e.code) {
+      case 'weak-password':
+        mensaje = 'La contraseña es muy débil. Use al menos 6 caracteres.';
+        break;
+      case 'email-already-in-use':
+        mensaje = 'El correo ya está registrado.';
+        break;
+      case 'invalid-email':
+        mensaje = 'Correo electrónico inválido.';
+        break;
+      default:
+        mensaje = e.message ?? 'Error: ${e.code}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error de Registro'),
+          content: Text(mensaje),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text('Error de conexión: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
