@@ -247,7 +247,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // Nuestras recomendaciones (igual que tenías)
+              // Nuestras recomendaciones
               Container(
                 color: const Color(0xFF2A2A2A),
                 padding: const EdgeInsets.all(20),
@@ -255,19 +255,24 @@ class WelcomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      children: const [
-                        Icon(Icons.recommend, color: Colors.orange, size: 28),
-                        SizedBox(width: 8),
-                        Text(
+                    children: [
+                      const Icon(Icons.recommend, color: Colors.orange, size: 28),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: const Text(
                           'Nuestras recomendaciones',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
+                          overflow: TextOverflow.visible,
+                          maxLines: 2,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+
                     const SizedBox(height: 15),
 
                     GridView.count(
