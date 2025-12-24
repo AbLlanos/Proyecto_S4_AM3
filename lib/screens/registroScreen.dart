@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class registroScreen extends StatelessWidget {
   const registroScreen({super.key});
@@ -67,7 +68,6 @@ void irPantallaLoginRegistrado(context) {
 
 Widget formularioRegistro(context) {
   TextEditingController nombre = TextEditingController();
-  TextEditingController apellido = TextEditingController();
   TextEditingController correo = TextEditingController();
   TextEditingController telefono = TextEditingController();
   TextEditingController contrasenia = TextEditingController();
@@ -77,17 +77,16 @@ Widget formularioRegistro(context) {
   const Color fieldColor = Color.fromARGB(197, 116, 116, 116);
   const Color labelColor = Colors.white;
 
-  return SingleChildScrollView( 
+  return SingleChildScrollView(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-
         Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: Center(
             child: Text(
               "Debe llenar los siguientes espacios obligatoriamente",
-              style: TextStyle(fontSize: 18, color: Colors.amber[50]), 
+              style: TextStyle(fontSize: 18, color: Colors.amber[50]),
               textAlign: TextAlign.center,
             ),
           ),
@@ -100,20 +99,6 @@ Widget formularioRegistro(context) {
             prefixIcon: const Icon(Icons.person, color: Colors.white70),
             border: OutlineInputBorder(),
             labelText: "Nombre",
-            labelStyle: TextStyle(color: labelColor),
-            filled: true,
-            fillColor: fieldColor,
-          ),
-        ),
-        const SizedBox(height: 12),  // ← Espaciado reducido
-
-        // APELLIDO
-        TextField(
-          controller: apellido,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
-            border: OutlineInputBorder(),
-            labelText: "Apellido",
             labelStyle: TextStyle(color: labelColor),
             filled: true,
             fillColor: fieldColor,
@@ -196,11 +181,22 @@ Widget formularioRegistro(context) {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => RegistroVixUsuario(correo, contrasenia, context),
+            onPressed: () => RegistroVixUsuario(
+              nombre,
+              correo,
+              telefono,
+              pais,
+              fechaNacimiento,
+              contrasenia,
+              context,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 110, 31, 93),
             ),
-            child: const Text('Registrarse', style: TextStyle(color: labelColor)),
+            child: const Text(
+              'Registrarse',
+              style: TextStyle(color: labelColor),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -211,7 +207,10 @@ Widget formularioRegistro(context) {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Ya tienes una cuenta? ", style: TextStyle(color: Colors.white)),
+              const Text(
+                "Ya tienes una cuenta? ",
+                style: TextStyle(color: Colors.white),
+              ),
               TextButton(
                 onPressed: () => irPantallaLoginRegistrado(context),
                 child: const Text(
@@ -228,9 +227,15 @@ Widget formularioRegistro(context) {
   );
 }
 
-
-
-Future<void> RegistroVixUsuario(correo, contrasenia, context) async {
+Future<void> RegistroVixUsuario(
+  nombre,
+  correo,
+  telefono,
+  pais,
+  fechaNacimiento,
+  contrasenia,
+  context,
+) async {
   if (correo.text.isEmpty || contrasenia.text.isEmpty) {
     showDialog(
       context: context,
@@ -256,6 +261,16 @@ Future<void> RegistroVixUsuario(correo, contrasenia, context) async {
           email: correo.text.trim(),
           password: contrasenia.text.trim(),
         );
+
+    // GUARDAR DATOS DEL USUARIO en Firebase usando UID
+    await guardarUsuarioEnFirebase(
+      credential.user!.uid,
+      nombre.text.trim(),
+      correo.text.trim(),
+      telefono.text.trim(),
+      pais.text.trim(),
+      fechaNacimiento.text.trim(),
+    );
 
     Navigator.pushNamed(context, '/login');
   } on FirebaseAuthException catch (e) {
@@ -306,4 +321,24 @@ Future<void> RegistroVixUsuario(correo, contrasenia, context) async {
       },
     );
   }
+}
+
+// Función para guardar datos del usuario en Firebase
+Future<void> guardarUsuarioEnFirebase(
+  String uid,
+  String nombre,
+  String correo,
+  String telefono,
+  String pais,
+  String fechaNacimiento,
+) async {
+  DatabaseReference ref = FirebaseDatabase.instance.ref("usuarios/$uid");
+
+  await ref.set({
+    "nombre": nombre,
+    "correo": correo,
+    "telefono": telefono,
+    "pais": pais,
+    "fechaNacimiento": fechaNacimiento,
+  });
 }

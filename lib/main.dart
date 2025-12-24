@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/screens/HomeScreen.dart';
+import 'package:proyecto_s4_am3/screens/agregarPeliculaScreen.dart';
 import 'package:proyecto_s4_am3/screens/catalogoScreen.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
 import 'package:proyecto_s4_am3/screens/registroScreen.dart';
@@ -22,6 +24,8 @@ class VixDocumentaryApp extends StatelessWidget {
       '/login': (context) => loginScreen(),
       '/registro': (context) => registroScreen(),
       '/catalogo': (context) => catalogoScreen(),
+      '/agregarPelicula': (context) => Agregarpeliculascreen(),
+      '/home': (context) => homeScreen(),
     },
 
 

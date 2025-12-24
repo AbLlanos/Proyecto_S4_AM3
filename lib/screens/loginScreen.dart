@@ -9,7 +9,7 @@ class loginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,  // ← EVITA overflow del teclado
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text(
           'Iniciar sesión',
@@ -95,7 +95,10 @@ Widget formularioRegistro(context) {
       const Center(
         child: Text(
           "Debe llenar los siguientes espacios obligatoriamente",
-          style: TextStyle(fontSize: 20, color: Color.fromRGBO(226, 226, 226, 1)),
+          style: TextStyle(
+            fontSize: 20,
+            color: Color.fromRGBO(226, 226, 226, 1),
+          ),
           textAlign: TextAlign.center,
         ),
       ),
@@ -131,7 +134,8 @@ Widget formularioRegistro(context) {
       SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () => loginVixUsuario(correoUsuario, contraseniaUsuario, context),
+          onPressed: () =>
+              loginVixUsuario(correoUsuario, contraseniaUsuario, context),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 110, 31, 93),
           ),
@@ -192,7 +196,15 @@ Future<void> loginVixUsuario(correo, contrasenia, context) async {
       password: contrasenia.text.trim(),
     );
 
-    Navigator.pushNamed(context, '/catalogo');
+    // CARGAR DATOS DEL USUARIO y navegar
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/home',
+      (route) => false,
+      arguments: credential.user!.uid,
+    );
+
+    //Alertas de errores de login
   } on FirebaseAuthException catch (e) {
     String mensaje = 'Error desconocido';
     switch (e.code) {
