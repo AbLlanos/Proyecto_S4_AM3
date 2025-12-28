@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
-import 'package:firebase_database/firebase_database.dart';
+//import 'package:firebase_database/firebase_database.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class registroScreen extends StatelessWidget {
   const registroScreen({super.key});
@@ -138,10 +140,13 @@ Widget formularioRegistro(context) {
         // TELÉFONO
         TextField(
           controller: telefono,
+          keyboardType: TextInputType.number,
+          maxLength: 10,
           decoration: InputDecoration(
+            counterText: '',
             prefixIcon: const Icon(Icons.phone, color: Colors.white70),
-            border: OutlineInputBorder(),
-            labelText: "Teléfono",
+            border: const OutlineInputBorder(),
+            labelText: "Teléfono (10 dígitos)",
             labelStyle: TextStyle(color: labelColor),
             filled: true,
             fillColor: fieldColor,
@@ -181,7 +186,7 @@ Widget formularioRegistro(context) {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => RegistroVixUsuario(
+            onPressed: () => registroVixUsuarioSupabase(
               nombre,
               correo,
               telefono,
@@ -227,6 +232,178 @@ Widget formularioRegistro(context) {
   );
 }
 
+Future<void> registroVixUsuarioSupabase(
+  nombre,
+  correo,
+  telefono,
+  pais,
+  fechaNacimiento,
+  contrasenia,
+  context,
+) async {
+  // Validación básica de campos vacíos
+  if (correo.text.isEmpty ||
+      contrasenia.text.isEmpty ||
+      nombre.text.isEmpty ||
+      telefono.text.isEmpty ||
+      pais.text.isEmpty ||
+      fechaNacimiento.text.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text('Por favor complete todos los campos'),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
+
+  // Validar teléfono
+  final tel = telefono.text.trim();
+  final soloNumeros = RegExp(r'^[0-9]+$');
+
+  if (!soloNumeros.hasMatch(tel) || tel.length != 10) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Teléfono inválido'),
+        content: Text(
+          'El número de teléfono debe tener exactamente 10 dígitos numéricos.',
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    return;
+  }
+
+  try {
+    final AuthResponse res = await supabase.auth.signUp(
+      email: correo.text.trim(),
+      password: contrasenia.text.trim(),
+      data: {
+        'nombre': nombre.text.trim(),
+        'telefono': tel,
+        'pais': pais.text.trim(),
+        'fechaNacimiento': fechaNacimiento.text.trim(),
+      },
+    );
+
+    final user = res.user;
+    if (user == null) {
+      throw Exception('No se pudo crear el usuario');
+    }
+
+    await guardarUsuarioEnSupabase(
+      user.id,
+      nombre.text.trim(),
+      correo.text.trim(),
+      tel,
+      pais.text.trim(),
+      fechaNacimiento.text.trim(),
+    );
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Registro exitoso'),
+        content: const Text(
+          'Tu cuenta se ha creado correctamente. Ahora puedes iniciar sesión.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    Navigator.pushNamed(context, '/login');
+  } on AuthException catch (e) {
+    final msg = e.message.toLowerCase();
+    String mensaje;
+
+    if (msg.contains('user already registered') ||
+        msg.contains('already exists')) {
+      mensaje = 'Ya existe una cuenta registrada con este correo.';
+    } else if (msg.contains('password') && msg.contains('weak') ||
+        msg.contains('password should be at least')) {
+      mensaje = 'La contraseña es muy débil. Use una contraseña más segura.';
+    } else if (msg.contains('email') && msg.contains('invalid')) {
+      mensaje = 'Correo electrónico inválido.';
+    } else if (msg.contains('invalid login credentials')) {
+      mensaje = 'Correo electrónico o contraseña incorrectos.';
+    } else if (msg.contains('email not confirmed')) {
+      mensaje = 'Debe confirmar su correo electrónico antes de continuar.';
+    } else if (msg.contains('rate limit')) {
+      mensaje = 'Demasiados intentos. Intente nuevamente más tarde.';
+    } else {
+      mensaje = e.message;
+    }
+
+    // Mostrar alerta
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error de Registro'),
+        content: Text(mensaje),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text('Error de conexión: $e'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> guardarUsuarioEnSupabase(
+  String uid,
+  String nombre,
+  String correo,
+  String telefono,
+  String pais,
+  String fechaNacimiento,
+) async {
+  await supabase.from('usuariosVix').insert({
+    'id': uid,
+    'nombre': nombre,
+    'correo': correo,
+    'telefono': telefono,
+    'pais': pais,
+    'fechaNacimiento': fechaNacimiento,
+  });
+}
+
+/*
 Future<void> RegistroVixUsuario(
   nombre,
   correo,
@@ -258,18 +435,18 @@ Future<void> RegistroVixUsuario(
   try {
     final credential = await FirebaseAuth.instance
         .createUserWithEmailAndPassword(
-          email: correo.text.trim(),
-          password: contrasenia.text.trim(),
+          email: correo.text,
+          password: contrasenia.text,
         );
 
     // GUARDAR DATOS DEL USUARIO en Firebase usando UID
     await guardarUsuarioEnFirebase(
       credential.user!.uid,
-      nombre.text.trim(),
-      correo.text.trim(),
-      telefono.text.trim(),
-      pais.text.trim(),
-      fechaNacimiento.text.trim(),
+      nombre.text,
+      correo.text,
+      telefono.text,
+      pais.text,
+      fechaNacimiento.text,
     );
 
     Navigator.pushNamed(context, '/login');
@@ -342,3 +519,5 @@ Future<void> guardarUsuarioEnFirebase(
     "fechaNacimiento": fechaNacimiento,
   });
 }
+
+*/

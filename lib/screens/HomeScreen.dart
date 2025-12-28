@@ -1,6 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class homeScreen extends StatefulWidget {
   const homeScreen({super.key});
@@ -18,28 +19,70 @@ class _homeScreenState extends State<homeScreen> {
     _cargarDatosUsuario();
   }
 
-Future<void> _cargarDatosUsuario() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    final snapshot = await FirebaseDatabase.instance
-        .ref('usuarios/${user.uid}')
-        .get();
+  Future<void> _cargarDatosUsuario() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
 
-    if (snapshot.exists && snapshot.value != null) {
-      final data = Map<String, dynamic>.from(
-        snapshot.value as Map, 
-      );
+    // SELECT * FROM usuarios WHERE id = user.id LIMIT 1
+    final response = await supabase
+        .from('usuariosVix')
+        .select()
+        .eq('id', user.id)
+        .maybeSingle();
 
+    if (response != null) {
       setState(() {
-        usuarioData = data;
+        usuarioData = Map<String, dynamic>.from(response);
       });
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Drawer
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.purple[100],
+              child: Center(
+                child: Text(
+                  "VixVideo",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.purple[800],
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.purple),
+              title: const Text("Home"),
+              onTap: () {
+                Navigator.pushNamed(context, '/home');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.library_add, color: Colors.purple),
+              title: const Text("Catalogo"),
+              onTap: () {
+                Navigator.pushNamed(context, '/catalogo');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.video_library, color: Colors.purple),
+              title: const Text("Agregar Video"),
+              onTap: () {
+                Navigator.pushNamed(context, '/agregarPelicula');
+              },
+            ),
+          ],
+        ),
+      ),
+
       appBar: AppBar(
         title: const Text(
           'Bienvenido',
@@ -50,18 +93,20 @@ Future<void> _cargarDatosUsuario() async {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white70),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
+            onPressed: () async {
+              await supabase.auth.signOut(); // cerrar sesión [web:96][web:89]
               Navigator.pushNamedAndRemoveUntil(
-                context, '/login', (route) => false,
+                context,
+                '/login',
+                (route) => false,
               );
             },
           ),
         ],
       ),
-      body: Stack( 
-        children: [
 
+      body: Stack(
+        children: [
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -71,7 +116,7 @@ Future<void> _cargarDatosUsuario() async {
                 fit: BoxFit.cover,
               ),
             ),
-            child: Container(color: const Color(0xAA000000)),  
+            child: Container(color: const Color(0xAA000000)),
           ),
 
           Center(
@@ -81,10 +126,9 @@ Future<void> _cargarDatosUsuario() async {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // LOGO
                   const Center(
                     child: Text(
-                      "VixDocumentary",
+                      "VixVideo",
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -93,8 +137,6 @@ Future<void> _cargarDatosUsuario() async {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // INSTRUCCIÓN
                   const Center(
                     child: Text(
                       "Datos del usuario",
@@ -123,23 +165,8 @@ Future<void> _cargarDatosUsuario() async {
                     ),
                     child: Column(
                       children: [
-
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Color.fromARGB(255, 110, 31, 93),
-                          child: Text(
-                            usuarioData?['nombre']?[0]?.toUpperCase() ?? 'U',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // NOMBRE COMPLETO
                         Text(
+                          // si no tienes 'apellido' en la tabla, solo usa 'nombre'
                           '${usuarioData?['nombre'] ?? ''} ${usuarioData?['apellido'] ?? ''}',
                           style: const TextStyle(
                             fontSize: 24,
@@ -149,27 +176,24 @@ Future<void> _cargarDatosUsuario() async {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-
-                        // CORREO
                         Text(
                           usuarioData?['correo'] ?? '',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-
-                        // TELÉFONO Y PAÍS
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.phone, color: Colors.white70, size: 20),
+                            const Icon(Icons.phone,
+                                color: Colors.white70, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               usuarioData?['telefono'] ?? '',
-                              style: TextStyle(color: Colors.white70),
+                              style: const TextStyle(color: Colors.white70),
                             ),
                           ],
                         ),
@@ -177,36 +201,38 @@ Future<void> _cargarDatosUsuario() async {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.public, color: Colors.white70, size: 20),
+                            const Icon(Icons.public,
+                                color: Colors.white70, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               usuarioData?['pais'] ?? '',
-                              style: TextStyle(color: Colors.white70),
+                              style: const TextStyle(color: Colors.white70),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Nacimiento: ${usuarioData?['fechaNacimiento'] ?? ''}',
-                          style: TextStyle(color: Colors.white70),
+                          'Nacimiento: ${usuarioData?['fecha_nacimiento'] ?? usuarioData?['fechaNacimiento'] ?? ''}',
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 40),
 
-                  // BOTONES
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/catalogo'),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/catalogo'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
-                        'Ver Mis Películas',
+                        'Descubre nuevos videos',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 110, 31, 93),
+                        backgroundColor:
+                            const Color.fromARGB(255, 110, 31, 93),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
@@ -215,14 +241,16 @@ Future<void> _cargarDatosUsuario() async {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/agregarPelicula'),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/agregarPelicula'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
-                        'Agregar Película',
+                        'Agregar nuevos videos',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 167, 45, 158),
+                        backgroundColor:
+                            const Color.fromARGB(255, 167, 45, 158),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),

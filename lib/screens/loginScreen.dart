@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/catalogoScreen.dart';
 import 'package:proyecto_s4_am3/screens/registroScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class loginScreen extends StatelessWidget {
   const loginScreen({super.key});
@@ -82,7 +84,7 @@ Widget formularioRegistro(context) {
     children: [
       const Center(
         child: Text(
-          "VixDocumentary",
+          "VixVideo",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -134,8 +136,11 @@ Widget formularioRegistro(context) {
       SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () =>
-              loginVixUsuario(correoUsuario, contraseniaUsuario, context),
+          onPressed: () => loginVixUsuarioSupabase(
+            correoUsuario,
+            contraseniaUsuario,
+            context,
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 110, 31, 93),
           ),
@@ -170,6 +175,101 @@ Widget formularioRegistro(context) {
   );
 }
 
+Future<void> loginVixUsuarioSupabase(correo, contrasenia, context) async {
+
+  if (correo.text.isEmpty || contrasenia.text.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error de Login'),
+          content: Text('Por favor complete todos los campos'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+    return;
+  }
+
+  try {
+    // 1. Iniciar sesión en Supabase Auth
+    final AuthResponse res = await supabase.auth.signInWithPassword(
+      email: correo.text.trim(),
+      password: contrasenia.text.trim(),
+    );
+
+    final user = res.user;
+    if (user == null) {
+      throw Exception('No se pudo iniciar sesión');
+    }
+
+    // 2. Navegar a /home
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/home',
+      (route) => false,
+      arguments: user.id,
+    );
+
+    } on AuthException catch (e) {
+
+    final msg = e.message.toLowerCase();
+    String mensaje;
+
+    if (msg.contains('invalid login credentials')) {
+      mensaje = 'Credenciales incorrectas.';
+    } else if (msg.contains('email') && msg.contains('invalid')) {
+      mensaje = 'Correo electrónico inválido.';
+    } else if (msg.contains('email not confirmed')) {
+      mensaje = 'Debe confirmar su correo electrónico antes de continuar.';
+    } else if (msg.contains('rate limit')) {
+      mensaje = 'Demasiados intentos. Intente nuevamente más tarde.';
+    } else {
+      mensaje = e.message;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error de Login'),
+          content: Text(mensaje),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text('Error de conexión: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+
+
+/*
 Future<void> loginVixUsuario(correo, contrasenia, context) async {
   if (correo.text.isEmpty || contrasenia.text.isEmpty) {
     showDialog(
@@ -257,3 +357,4 @@ Future<void> loginVixUsuario(correo, contrasenia, context) async {
     );
   }
 }
+*/

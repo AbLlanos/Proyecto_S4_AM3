@@ -1,28 +1,136 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:proyecto_s4_am3/main.dart';
+import 'package:proyecto_s4_am3/screens/editarDatosVideoScreen.dart'
+    hide supabase;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:video_player/video_player.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class catalogoScreen extends StatelessWidget {
-  catalogoScreen({super.key});
+class catalogoScreen extends StatefulWidget {
+  const catalogoScreen({super.key});
+
+  @override
+  State<catalogoScreen> createState() => _catalogoScreenState();
+}
+
+class _catalogoScreenState extends State<catalogoScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  bool _isPublicTab = true;
+  String _filtroCategoria = 'todos';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ← NUEVA: Obtener emails de todos los autores
+  Future<Map<String, String>> _getAllUserEmails(Set<String> userIds) async {
+    print('Buscando NOMBRES para userIds: $userIds');
+
+    final names = <String, String>{};
+
+    for (String userId in userIds) {
+      try {
+        print('Buscando userId: $userId en usuariosVix');
+        final response = await supabase
+            .from('usuariosVix')
+            .select('id, nombre')
+            .eq('id', userId)
+            .maybeSingle();
+
+        print('Response para $userId: $response');
+
+        if (response != null) {
+          names[userId] = response['nombre'] ?? 'Sin nombre';
+        } else {
+          names[userId] = 'No encontrado';
+        }
+      } catch (e) {
+        print('Error para $userId: $e');
+        names[userId] = 'Usuario desconocido';
+      }
+    }
+    print('Nombres encontrados: $names');
+    return names;
+  }
+
+  //Funcion para leer videos publicos
+  Future<List<Map<String, dynamic>>> leerVideosPublicos() async {
+    List<Map<String, dynamic>> videos = [];
+
+    if (_filtroCategoria == 'todos') {
+      final response = await supabase
+          .from('contenidoVix')
+          .select()
+          .eq('es_publica', true)
+          .order('fecha_subida', ascending: false)
+          .limit(50);
+      videos = List<Map<String, dynamic>>.from(response);
+    } else {
+      final response = await supabase
+          .from('contenidoVix')
+          .select()
+          .eq('es_publica', true)
+          .eq('categoria', _filtroCategoria)
+          .order('fecha_subida', ascending: false)
+          .limit(50);
+      videos = List<Map<String, dynamic>>.from(response);
+    }
+
+    final userIds = videos.map((v) => v['user_id'].toString()).toSet();
+    final emails = await _getAllUserEmails(userIds);
+
+    for (var video in videos) {
+      video['author_email'] =
+          emails[video['user_id'].toString()] ?? 'Cargando...';
+    }
+    return videos;
+  }
+
+  //Funcion para leer mis videos
+  // Leer MIS videos (privados + públicos)
+  Future<List<Map<String, dynamic>>> leerMisVideos() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return [];
+
+    final response = await supabase
+        .from('contenidoVix')
+        .select()
+        .eq('user_id', user.id)
+        .order('fecha_subida', ascending: false);
+
+    final videos = List<Map<String, dynamic>>.from(response);
+    for (var video in videos) {
+      video['author_email'] = user.email ?? 'Sin email';
+    }
+    return videos;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Catálogo disponible',
+        title: const Text(
+          '',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
             color: Color.fromRGBO(255, 255, 255, 0.835),
           ),
         ),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 Color.fromARGB(255, 110, 31, 93),
@@ -31,501 +139,585 @@ class catalogoScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
 
-      body: Listar(context),
+        actions: [
+          // ← Dropdown filtro categoría
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _filtroCategoria,
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                dropdownColor: Colors.black87,
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'todos', child: Text('Todos')),
+                  DropdownMenuItem(
+                    value: 'Educativo',
+                    child: Text('Educativo'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Gameplay',
+                    child: Text('Gameplay'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Tutorial',
+                    child: Text('Tutorial'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Entretenimiento',
+                    child: Text('Entretenimiento'),
+                  ),
+                  DropdownMenuItem(value: 'Acción', child: Text('Acción')),
+                ],
+                onChanged: (val) => setState(() => _filtroCategoria = val!),
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => setState(() {}),
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Actualizar',
+          ),
+        ],
+
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.amber,
+          tabs: const [
+            Tab(text: 'Descubrir'),
+            Tab(text: 'Mis Videos'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          ListarVideos(leerVideosPublicos, isOwner: false),
+          ListarVideos(leerMisVideos, isOwner: true),
+        ],
+      ),
     );
   }
 }
 
-// json
-Future<List<Map<String, dynamic>>> leerPeliculasUsuario() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return [];
+class ListarVideos extends StatelessWidget {
+  final Future<List<Map<String, dynamic>>> Function() fetchVideos;
+  final bool isOwner;
 
-  final snapshot = await FirebaseDatabase.instance
-      .ref('usuarios/${user.uid}/peliculas')
-      .get();
+  const ListarVideos(this.fetchVideos, {super.key, required this.isOwner});
 
-  print('snapshot.exists = ${snapshot.exists}');
-  print('snapshot.value = ${snapshot.value}');
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchVideos(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          }
 
-  if (!snapshot.exists || snapshot.value == null) return [];
+          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            final data = snapshot.data!;
+            return ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                final item = data[index];
+                return VideoCard(item: item, isOwner: isOwner);
+              },
+            );
+          } else {
+            return const Center(
+              child: Text(
+                "No hay videos disponibles",
+                style: TextStyle(color: Colors.white70, fontSize: 18),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}
 
-  final rawList = List.from(snapshot.value as List);
+class VideoCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final bool isOwner;
 
-  final List<Map<String, dynamic>> peliculas = [];
-  for (int i = 0; i < rawList.length; i++) {
-    final value = rawList[i];
-    if (value == null) continue;
-
-    final peli = Map<String, dynamic>.from(value as Map);
-    peliculas.add({
-      'id': i.toString(),
-      'titulo': peli['titulo'],
-      'anio': peli['year'],
-      'image': peli['portada'],
-      'descripcion': peli['descripcion'],
-      'trailer': peli['trailer'],
-      'pelicula': peli['video'],
-    });
+  String _getUserName(dynamic userId) {
+    if (userId == null) return 'Anónimo';
+    final id = userId.toString();
+    return id.length > 8
+        ? '${id.substring(0, 4)}...${id.substring(id.length - 4)}'
+        : id;
   }
 
-  print('peliculas length = ${peliculas.length}');
-  return peliculas;
-}
+  const VideoCard({super.key, required this.item, required this.isOwner});
 
-// lista
-Widget Listar(BuildContext context) {
-  return Container(
-    color: Colors.black,
-    child: FutureBuilder<List<Map<String, dynamic>>>(
-      future: leerPeliculasUsuario(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
-        }
+  @override
+  Widget build(BuildContext context) {
+    final fechaSubida = item['fecha_subida'] != null
+        ? DateTime.parse(item['fecha_subida']).toLocal()
+        : null;
+    final duracion = item['duracion'] ?? 'N/A';
+    final edad = item['edad_recomendada'] ?? 'N/A';
 
-        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          final data = snapshot.data!;
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final item = data[index];
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                elevation: 8,
-                color: Colors.grey[900],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item['titulo'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "${item['anio'] ?? ''}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item['image'] ?? '',
-                          width: double.infinity,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) =>
-                              Container(height: 180, color: Colors.grey[800]),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // BOTONES EDITAR / ELIMINAR
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () =>
-                                _mostrarDialogoEditar(context, item),
-                            icon: const Icon(Icons.edit, color: Colors.amber),
-                            label: const Text(
-                              'Editar',
-                              style: TextStyle(color: Colors.amber),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          TextButton.icon(
-                            onPressed: () => _eliminarPelicula(context, item),
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            label: const Text(
-                              'Eliminar',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        } else {
-          return const Center(
-            child: Text("No hay data", style: TextStyle(color: Colors.white70)),
-          );
-        }
-      },
-    ),
-  );
-}
-
-//Funcion para eliminar
-Future<void> _eliminarPelicula(
-  BuildContext context,
-  Map<String, dynamic> item,
-) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-
-  final id = item['id']; // viene de leerPeliculasUsuario()
-  final ref = FirebaseDatabase.instance.ref(
-    'usuarios/${user.uid}/peliculas/$id',
-  );
-
-  await ref.remove();
-
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(const SnackBar(content: Text('Película eliminada')));
-
-  // Forzar rebuild de la pantalla actual
-  (context as Element).reassemble();
-}
-
-//Funcion para editar
-
-void _mostrarDialogoEditar(BuildContext context, Map<String, dynamic> item) {
-  final TextEditingController tituloCtrl = TextEditingController(
-    text: item['titulo'] ?? '',
-  );
-  final TextEditingController anioCtrl = TextEditingController(
-    text: item['anio']?.toString() ?? '',
-  );
-  final TextEditingController portadaCtrl = TextEditingController(
-    text: item['image'] ?? '',
-  );
-  final TextEditingController descCtrl = TextEditingController(
-    text: item['descripcion'] ?? '',
-  );
-
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Editar película',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: SingleChildScrollView(
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      elevation: 8,
+      color: Colors.grey[900],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () => _mostrarDetalle(context, item),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: tituloCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Título',
-                  labelStyle: TextStyle(color: Colors.white70),
-                ),
-                style: const TextStyle(color: Colors.white),
+
+
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+
+
+
+                  Expanded(
+                    
+                    child: Text(
+                      item['titulo'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (fechaSubida != null)
+                    Text(
+                      '${fechaSubida.day}/${fechaSubida.month}/${fechaSubida.year}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
               ),
-              TextField(
-                controller: anioCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Año',
-                  labelStyle: TextStyle(color: Colors.white70),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  item['portada_url'] ?? '',
+                  width: double.infinity,
+                  height: 180,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      Container(height: 180, color: Colors.grey[800]),
                 ),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
               ),
-              TextField(
-                controller: portadaCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'URL portada',
-                  labelStyle: TextStyle(color: Colors.white70),
+              const SizedBox(height: 8),
+
+              const SizedBox(height: 8),
+
+              // Auto
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.person, color: Colors.amber[400], size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Autor: ${item['author_email'] ?? _getUserName(item['user_id'])}',
+
+                        style: TextStyle(
+                          color: Colors.amber[400],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                style: const TextStyle(color: Colors.white),
               ),
-              TextField(
-                controller: descCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  labelStyle: TextStyle(color: Colors.white70),
+
+              // ← Categoría (DESPUÉS del autor)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.category, color: Colors.blue[400], size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Categoría: ${item['categoria'] ?? 'Sin categoría'}',
+                        style: TextStyle(
+                          color: Colors.blue[400],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                maxLines: 3,
-                style: const TextStyle(color: Colors.white),
               ),
+
+              Text(
+                item['descripcion'] ?? '',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.timer, color: Colors.white70, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$duracion min',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(width: 16),
+                  Icon(
+                    Icons.confirmation_number,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
+                  Text(
+                    ' $edad+',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
+              ),
+              if (isOwner) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _editarVideo(context, item),
+                      icon: const Icon(Icons.edit, color: Colors.amber),
+                      label: const Text(
+                        'Editar',
+                        style: TextStyle(color: Colors.amber),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _eliminarVideo(context, item),
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text(
+                        'Eliminar',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _mostrarDetalle(BuildContext context, Map<String, dynamic> video) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => VideoDetalleModal(video: video),
+    );
+  }
+
+  void _editarVideo(BuildContext context, Map<String, dynamic> video) {
+    print('_editarVideo INICIADO');
+    print('video data: $video');
+
+    Navigator.pushNamed(context, '/editarVideo', arguments: video);
+
+    print('🚀 _editarVideo: Navigator.pushNamed ejecutado');
+  }
+
+  Future<void> _eliminarVideo(
+    BuildContext context,
+    Map<String, dynamic> video,
+  ) async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Eliminar video',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          '¿Estás seguro de eliminar "${video['titulo']}"?',
+          style: const TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(), // Cancelar
+            onPressed: () => Navigator.pop(context, false),
             child: const Text(
               'Cancelar',
               style: TextStyle(color: Colors.white70),
             ),
           ),
           TextButton(
-            onPressed: () async {
-              await _guardarEdicionPelicula(
-                context,
-                item['id'],
-                tituloCtrl.text.trim(),
-                anioCtrl.text.trim(),
-                portadaCtrl.text.trim(),
-                descCtrl.text.trim(),
-              );
-              Navigator.of(context).pop(); // cierra diálogo
-            },
-            child: const Text('Aceptar', style: TextStyle(color: Colors.amber)),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
-      );
-    },
-  );
-}
+      ),
+    );
 
-Future<void> _guardarEdicionPelicula(
-  BuildContext context,
-  String id,
-  String titulo,
-  String anio,
-  String portada,
-  String descripcion,
-) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
-
-  final ref = FirebaseDatabase.instance.ref(
-    'usuarios/${user.uid}/peliculas/$id',
-  );
-
-  await ref.update({
-    'titulo': titulo,
-    'year': anio,
-    'portada': portada,
-    'descripcion': descripcion,
-  });
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Éxito'),
-        content: const Text('Película actualizada correctamente'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+    if (confirmado == true) {
+      try {
+        await supabase.from('contenidoVix').delete().eq('id', video['id']);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Éxito'),
+            content: const Text('Video eliminado correctamente'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      );
-    },
-  );
-
-  // Forzar rebuild de la lista
-  (context as Element).reassemble();
+        );
+      } catch (e) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Error al eliminar: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
 }
 
-//Modal para mostrar detalles de la pelicula
-void _mostrarDetalle(BuildContext context, Map pelicula) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => DetalleModal(pelicula: pelicula),
-  );
+class VideoDetalleModal extends StatefulWidget {
+  final Map<String, dynamic> video;
+  const VideoDetalleModal({super.key, required this.video});
+
+  @override
+  State<VideoDetalleModal> createState() => _VideoDetalleModalState();
 }
 
-class DetalleModal extends StatelessWidget {
-  final Map pelicula;
-  const DetalleModal({super.key, required this.pelicula});
+class _VideoDetalleModalState extends State<VideoDetalleModal> {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  final bool _isPlaying = false;
 
-  Future<void> _abrirUrl(String url) async {
-    final uri = Uri.parse(url);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok) print('No se pudo abrir: $uri');
+  @override
+  void initState() {
+    super.initState();
+    _inicializarReproductor();
+  }
+
+  Future<void> _inicializarReproductor() async {
+    final videoUrl = widget.video['video_url'];
+    if (videoUrl != null) {
+      _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+      await _controller!.initialize();
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final fechaSubida = widget.video['fecha_subida'] != null
+        ? DateTime.parse(widget.video['fecha_subida']).toLocal()
+        : null;
+    final duracion = widget.video['duracion'] ?? 'N/A';
+    final edad = widget.video['edad_recomendada'] ?? 'N/A';
+
     return Container(
-      height: MediaQuery.of(context).size.height,
+      height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(color: Colors.black),
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20, bottom: 16),
-            child: Text(
-              pelicula['titulo'] ?? '',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              pelicula['image'] ?? '',
-              width: double.infinity,
+          // PLAYER DE VIDEO
+          if (_isInitialized && _controller != null)
+            Container(
               height: 250,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) =>
-                  Container(height: 250, color: Colors.grey[800]),
+              width: double.infinity,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  VideoPlayer(_controller!),
+                  IconButton(
+                    iconSize: 64,
+                    icon: Icon(
+                      _controller!.value.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      color: Colors.white,
+                      size: 64,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        if (_controller!.value.isPlaying) {
+                          _controller!.pause();
+                        } else {
+                          _controller!.play();
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              height: 250,
+              color: Colors.grey[800],
+              child: const Icon(Icons.movie, color: Colors.white70, size: 64),
             ),
-          ),
 
-          const SizedBox(height: 20),
-
-          // AÑO
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  "${pelicula['anio'] ?? ''}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  widget.video['titulo'] ?? '',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 16),
-                const Icon(Icons.hd, color: Colors.white70, size: 20),
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.video['portada_url'] ?? '',
+                    width: double.infinity,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) =>
+                        Container(height: 200, color: Colors.grey[800]),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (fechaSubida != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Subido: ${fechaSubida.day}/${fechaSubida.month}/${fechaSubida.year}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    widget.video['descripcion'] ?? '',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: _isInitialized
+                          ? () {
+                              setState(() {
+                                if (_controller!.value.isPlaying) {
+                                  _controller!.pause();
+                                } else {
+                                  _controller!.play();
+                                }
+                              });
+                            }
+                          : null,
+                      icon: const Icon(Icons.movie),
+                      label: const Text(
+                        'Reproducir o pausar video',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Duración: $duracion min • $edad+',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white54),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                      label: const Text('Cerrar'),
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // DESCRIPCIÓN (centrado)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              pelicula['descripcion'] ?? '',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // BOTÓN 1: TRAILER
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                ),
-                onPressed: () async {
-                  try {
-                    final url = pelicula['trailer']?.toString();
-                    if (url != null &&
-                        url.isNotEmpty &&
-                        url.startsWith('http')) {
-                      final uri = Uri.parse(url);
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tráiler no disponible')),
-                      );
-                    }
-                  } catch (e) {
-                    print('Error tráiler: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error al abrir tráiler')),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.ondemand_video),
-                label: const Text('Mirar tráiler'),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // BOTÓN 2: PELÍCULA
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: Colors.white),
-                onPressed: () async {
-                  try {
-                    final url = pelicula['pelicula']?.toString();
-                    if (url != null &&
-                        url.isNotEmpty &&
-                        url.startsWith('http')) {
-                      final uri = Uri.parse(url);
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Película no disponible')),
-                      );
-                    }
-                  } catch (e) {
-                    print('Error película: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error al abrir película')),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.movie),
-                label: const Text(
-                  'Ver película',
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 1),
-
-          // BOTÓN CERRAR
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white54),
-                ),
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-                label: const Text('Cerrar'),
-              ),
             ),
           ),
         ],
