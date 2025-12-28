@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 class homeScreen extends StatefulWidget {
   const homeScreen({super.key});
 
@@ -67,7 +66,7 @@ class _homeScreenState extends State<homeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.library_add, color: Colors.purple),
-              title: const Text("Catalogo"),
+              title: const Text("Catálogo o descubrir"),
               onTap: () {
                 Navigator.pushNamed(context, '/catalogo');
               },
@@ -90,15 +89,38 @@ class _homeScreenState extends State<homeScreen> {
         ),
         backgroundColor: const Color.fromARGB(255, 110, 31, 93),
         elevation: 0,
+
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white70),
             onPressed: () async {
-              await supabase.auth.signOut(); // cerrar sesión [web:96][web:89]
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
+              await supabase.auth.signOut();
+
+              // ← MOSTRAR DIALOGO ANTES de navegar
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text(
+                    '¡Sesión cerrada!',
+                  ),
+                  content: const Text(
+                    'Sesión cerrada exitosamente',
+                    textAlign: TextAlign.center,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (route) => false,
+                        );
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -111,12 +133,12 @@ class _homeScreenState extends State<homeScreen> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                  'https://i.postimg.cc/LsXq5Nsw-/IMG-20240104-120318.jpg',
+                  'https://i.pinimg.com/564x/a5/d3/f2/a5d3f2a854a4c14780d849710aae38f9.jpg',
                 ),
                 fit: BoxFit.cover,
               ),
             ),
-            child: Container(color: const Color(0xAA000000)),
+            child: Container(color: const Color.fromARGB(122, 0, 0, 0)),
           ),
 
           Center(
@@ -188,8 +210,11 @@ class _homeScreenState extends State<homeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.phone,
-                                color: Colors.white70, size: 20),
+                            const Icon(
+                              Icons.phone,
+                              color: Colors.white70,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               usuarioData?['telefono'] ?? '',
@@ -201,8 +226,11 @@ class _homeScreenState extends State<homeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.public,
-                                color: Colors.white70, size: 20),
+                            const Icon(
+                              Icons.public,
+                              color: Colors.white70,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               usuarioData?['pais'] ?? '',
@@ -231,8 +259,7 @@ class _homeScreenState extends State<homeScreen> {
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 110, 31, 93),
+                        backgroundColor: const Color.fromARGB(255, 110, 31, 93),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
@@ -249,8 +276,12 @@ class _homeScreenState extends State<homeScreen> {
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 167, 45, 158),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          167,
+                          45,
+                          158,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),

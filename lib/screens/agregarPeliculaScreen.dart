@@ -279,7 +279,15 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     const Color labelColor = Colors.white;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Añadir video")),
+      appBar: AppBar(
+        title: const Text(
+          'Agregar video nuevo',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
+        ),
+        backgroundColor: const Color.fromARGB(255, 110, 31, 93),
+        elevation: 0,
+      ),
+
       body: SingleChildScrollView(
         child: Container(
           decoration: const BoxDecoration(
@@ -300,7 +308,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                   child: Text(
                     "Agregar video",
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -309,10 +317,10 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                 const SizedBox(height: 16),
                 const Center(
                   child: Text(
-                    "Selecciona portada, video y completa los datos",
+                    "Debe llenar todos los espacios a continuación",
                     style: TextStyle(
                       fontSize: 20,
-                      color: Color.fromRGBO(226, 226, 226, 1),
+                      color: Color.fromRGBO(255, 255, 255, 1),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -556,7 +564,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
-                      'Agregar Video',
+                      'Subir video',
                       style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
