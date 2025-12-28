@@ -102,15 +102,29 @@ class _catalogoScreenState extends State<catalogoScreen>
     final user = supabase.auth.currentUser;
     if (user == null) return [];
 
-    final response = await supabase
-        .from('contenidoVix')
-        .select()
-        .eq('user_id', user.id)
-        .order('fecha_subida', ascending: false);
+    List<Map<String, dynamic>> videos = [];
 
-    final videos = List<Map<String, dynamic>>.from(response);
+    if (_filtroCategoria == 'todos') {
+      // ← TODOS mis videos (públicos + privados)
+      final response = await supabase
+          .from('contenidoVix')
+          .select()
+          .eq('user_id', user.id)
+          .order('fecha_subida', ascending: false);
+      videos = List<Map<String, dynamic>>.from(response);
+    } else {
+      // ← SOLO mis videos de categoría específica
+      final response = await supabase
+          .from('contenidoVix')
+          .select()
+          .eq('user_id', user.id)
+          .eq('categoria', _filtroCategoria)
+          .order('fecha_subida', ascending: false);
+      videos = List<Map<String, dynamic>>.from(response);
+    }
+
     for (var video in videos) {
-      video['author_email'] = user.email ?? 'Sin email';
+      video['author_email'] = 'Propietario';
     }
     return videos;
   }
@@ -161,14 +175,8 @@ class _catalogoScreenState extends State<catalogoScreen>
                     value: 'Educativo',
                     child: Text('Educativo'),
                   ),
-                  DropdownMenuItem(
-                    value: 'Gameplay',
-                    child: Text('Gameplay'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Tutorial',
-                    child: Text('Tutorial'),
-                  ),
+                  DropdownMenuItem(value: 'Gameplay', child: Text('Gameplay')),
+                  DropdownMenuItem(value: 'Tutorial', child: Text('Tutorial')),
                   DropdownMenuItem(
                     value: 'Entretenimiento',
                     child: Text('Entretenimiento'),
@@ -286,17 +294,10 @@ class VideoCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-
-
-
                   Expanded(
-                    
                     child: Text(
                       item['titulo'] ?? '',
                       style: const TextStyle(
