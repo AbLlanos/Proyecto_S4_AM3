@@ -176,7 +176,6 @@ Widget formularioRegistro(context) {
 }
 
 Future<void> loginVixUsuarioSupabase(correo, contrasenia, context) async {
-
   if (correo.text.isEmpty || contrasenia.text.isEmpty) {
     showDialog(
       context: context,
@@ -208,16 +207,25 @@ Future<void> loginVixUsuarioSupabase(correo, contrasenia, context) async {
       throw Exception('No se pudo iniciar sesión');
     }
 
-    // 2. Navegar a /home
+    // 2. OBTENER ROL DEL USUARIO
+    final userData = await supabase
+        .from('usuariosVix')
+        .select('rol')
+        .eq('id', user.id)
+        .single();
+
+    final rol = userData['rol'] as String;
+
+    // 3. REDIRIGIR SEGÚN ROL
+    String rutaDestino = rol == 'administrador' ? '/home' : '/catalogoUsuario';
+
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/home',
+      rutaDestino,
       (route) => false,
-      arguments: user.id,
+      arguments: {'userId': user.id, 'rol': rol},
     );
-
-    } on AuthException catch (e) {
-
+  } on AuthException catch (e) {
     final msg = e.message.toLowerCase();
     String mensaje;
 

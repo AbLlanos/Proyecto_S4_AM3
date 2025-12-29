@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/screens/catalogoUsuarioScreen.dart';
 import 'package:proyecto_s4_am3/screens/editarDatosVideoScreen.dart';
 import 'package:proyecto_s4_am3/screens/homeScreen.dart';
 import 'package:proyecto_s4_am3/screens/agregarPeliculaScreen.dart';
@@ -39,6 +40,7 @@ class VixVideoApp extends StatelessWidget {
       '/login': (context) => loginScreen(),
       '/registro': (context) => registroScreen(),
       '/catalogo': (context) => catalogoScreen(),
+      '/catalogoUsuario': (context) => catalogoUsuarioScreen(),
       '/agregarPelicula': (context) => Agregarpeliculascreen(),
       '/editarVideo': (context) => Editardatosvideoscreen(),
       '/home': (context) => homeScreen(),
