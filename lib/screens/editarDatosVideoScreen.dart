@@ -1,6 +1,4 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final supabase = Supabase.instance.client;
@@ -13,8 +11,6 @@ class Editardatosvideoscreen extends StatefulWidget {
 }
 
 class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
-  Uint8List? _portadaBytes;
-  String? _portadaExt;
   Map<String, dynamic>? videoData;
 
   final TextEditingController titulo = TextEditingController();
@@ -22,10 +18,16 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
   final TextEditingController duracion = TextEditingController();
   final TextEditingController edadRecomendada = TextEditingController();
   final TextEditingController trailerUrl = TextEditingController();
-  String _categoriaSeleccionada = 'Tendencia';
+  final TextEditingController portadaUrl = TextEditingController();
+  final TextEditingController videoUrl = TextEditingController();
 
+  String _categoriaSeleccionada = 'Tendencia';
   bool _esPublica = true;
-  static const double maxImageSizeBytes = 1 * 1024 * 1024;
+
+  // Misma conversión que al agregar (solo para video Dropbox)
+  String _convertirDropboxUrl(String url) {
+    return url.replaceAll('dl=0', 'raw=1');
+  }
 
   @override
   void initState() {
@@ -34,294 +36,265 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
       videoData =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-      print('Editardatosvideoscreen initState INICIADO');
-      print('videoData from arguments: $videoData');
-
       if (videoData != null) {
-        print('CARGANDO DATOS:');
-        print('  titulo: ${videoData!['titulo']}');
-        print('  descripcion: ${videoData!['descripcion']}');
-        print('  duracion: ${videoData!['duracion']}');
-        print('  edad_recomendada: ${videoData!['edad_recomendada']}');
-        print('  trailer_url: ${videoData!['trailer_url']}');
-        print('  es_publica: ${videoData!['es_publica']}');
-
         titulo.text = videoData!['titulo'] ?? '';
         descripcion.text = videoData!['descripcion'] ?? '';
         duracion.text = videoData!['duracion']?.toString() ?? '';
-        edadRecomendada.text = videoData!['edad_recomendada']?.toString() ?? '';
+        edadRecomendada.text =
+            videoData!['edad_recomendada']?.toString() ?? '';
         trailerUrl.text = videoData!['trailer_url'] ?? '';
+        portadaUrl.text = videoData!['portada_url'] ?? '';
+        videoUrl.text = videoData!['video_url'] ?? '';
         _esPublica =
-            videoData!['es_publica'] == true ||
-            videoData!['es_publica'] == 'true';
-        _categoriaSeleccionada = videoData!['categoria'] ?? 'Acción';
+            videoData!['es_publica'] == true || videoData!['es_publica'] == 'true';
+        _categoriaSeleccionada = videoData!['categoria'] ?? 'Tendencia';
 
-        print('DATOS CARGADOS CORRECTAMENTE (incluyendo trailer_url)');
         setState(() {});
       } else {
-        print('ERROR: videoData es NULL');
+        // Si quieres, aquí puedes mostrar un diálogo de error
+        debugPrint('ERROR: videoData es NULL');
       }
-    });
-  }
-
-  Future<void> _pickPortada() async {
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      withData: true,
-    );
-    if (res == null || res.files.single.bytes == null) return;
-
-    final file = res.files.single;
-    final size = file.size.toDouble();
-
-    if (size > maxImageSizeBytes) {
-      await showDialog(
-        context: context,
-        builder: (context) => const AlertDialog(
-          title: Text('Imagen muy grande'),
-          content: Text('La portada no puede superar 1 MB.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _portadaBytes = file.bytes;
-      _portadaExt = file.extension ?? 'jpg';
     });
   }
 
   Future<void> actualizarVideo() async {
     final user = supabase.auth.currentUser;
     if (user == null) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => const AlertDialog(
-            title: Text('Error'),
-            content: Text('Debes iniciar sesión.'),
-          ),
-        );
-      }
+      await showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          title: Text('Error'),
+          content: Text('Debes iniciar sesión.'),
+        ),
+      );
       return;
     }
 
     if (titulo.text.trim().isEmpty ||
         descripcion.text.trim().isEmpty ||
-        trailerUrl.text.trim().isEmpty) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Datos incompletos'),
-            content: const Text(
-              'Completa **todos** los campos, incluyendo el enlace del trailer.',
-            ),
-          ),
-        );
-      }
+        duracion.text.trim().isEmpty ||
+        edadRecomendada.text.trim().isEmpty ||
+        trailerUrl.text.trim().isEmpty ||
+        portadaUrl.text.trim().isEmpty ||
+        videoUrl.text.trim().isEmpty) {
+      await showDialog(
+        context: context,
+        builder: (context) => const AlertDialog(
+          title: Text('Datos incompletos'),
+          content: Text('Debe completar todos los campos.'),
+        ),
+      );
       return;
     }
 
     if (videoData == null) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: Colors.grey[900],
-            title: const Text('Error', style: TextStyle(color: Colors.white)),
-            content: const Text(
-              'No hay video para actualizar.\nRegresa y selecciona un video.',
-              style: TextStyle(color: Colors.white70),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK', style: TextStyle(color: Colors.amber)),
-              ),
-            ],
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text(
+            'No hay video para actualizar.\nRegresa y selecciona un video.',
           ),
-        );
-      }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
     try {
-      Map<String, dynamic> updateData = {
+      final portadaUrlFinal = portadaUrl.text.trim();
+      final videoUrlFinal = _convertirDropboxUrl(videoUrl.text.trim());
+
+      final updateData = {
         'titulo': titulo.text.trim(),
         'descripcion': descripcion.text.trim(),
         'duracion': duracion.text.trim(),
         'edad_recomendada': edadRecomendada.text.trim(),
         'trailer_url': trailerUrl.text.trim(),
+        'portada_url': portadaUrlFinal,
+        'video_url': videoUrlFinal,
         'es_publica': _esPublica,
         'categoria': _categoriaSeleccionada,
       };
 
-      if (_portadaBytes != null) {
-        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
-        final bucket = supabase.storage.from('vixDocumentaryRepository');
-        final portadaPath =
-            '${user.id}/portadas/$tempId/portada.${_portadaExt ?? "jpg"}';
-
-        await bucket.uploadBinary(
-          portadaPath,
-          _portadaBytes!,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-        );
-        updateData['portada_url'] = bucket.getPublicUrl(portadaPath);
-      }
-
-      print('Actualizando ID: ${videoData!['id']}');
-      print('Nuevo trailer_url: "${trailerUrl.text.trim()}"');
       await supabase
           .from('contenidoVix')
           .update(updateData)
           .eq('id', videoData!['id']);
 
-      if (mounted) {
-        Navigator.pop(context);
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 28),
-                SizedBox(width: 12),
-                Text('¡Éxito!'),
-              ],
-            ),
-            content: const Text(
-              'Video actualizado correctamente',
-              style: TextStyle(fontSize: 16),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error: $e');
+      if (!mounted) return;
 
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('¡Éxito!'),
+          content: const Text('Video actualizado correctamente'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
             ),
-            title: const Row(
-              children: [
-                Icon(Icons.error, color: Colors.red, size: 28),
-                SizedBox(width: 12),
-                Text('Error'),
-              ],
+          ],
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Error al actualizar: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
             ),
-            content: Text(
-              'Error al actualizar:\n$e',
-              style: const TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
+          ],
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Editardatosvideoscreen BUILD INICIADO');
+    const Color fieldColor = Color.fromARGB(197, 116, 116, 116);
+    const Color labelColor = Colors.white;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Editar Video"),
+        title: const Text(
+          'Editar película',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
+        ),
         backgroundColor: const Color.fromARGB(255, 110, 31, 93),
+        elevation: 0,
       ),
-      body: Container(
-        color: Colors.black87,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
+      body: SingleChildScrollView(
+        child: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(
+                'https://img.freepik.com/foto-gratis/luces-brillantes-negro_23-2147785758.jpg?semt=ais_hybrid&w=740&q=80',
+              ),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "Editar datos del video",
+                  "Editar datos de la película",
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Portada: cualquier URL | Video: Dropbox (dl=0 → raw=1)",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 24),
 
-                // Portada
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _pickPortada,
-                    icon: const Icon(Icons.image, size: 24),
-                    label: Text(
-                      _portadaBytes == null
-                          ? 'Cambiar portada'
-                          : 'Nueva portada ✓',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                // PORTADA URL
+                const Text(
+                  'URL de la portada',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: portadaUrl,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.image, color: Colors.white70),
+                    suffixIcon: portadaUrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            onPressed: () {
+                              portadaUrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    border: const OutlineInputBorder(),
+                    labelText: "URL portada",
+                    labelStyle: const TextStyle(color: labelColor),
+                    filled: true,
+                    fillColor: fieldColor,
+                    hintText: "https://image.tmdb.org/...jpg",
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // NUEVO CAMPO: TRAILER URL
+                // VIDEO URL
                 const Text(
-                  'Enlace del trailer (YouTube)',
+                  'URL del video (Dropbox)',
                   style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: videoUrl,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.movie, color: Colors.white70),
+                    suffixIcon: videoUrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            onPressed: () {
+                              videoUrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    border: const OutlineInputBorder(),
+                    labelText: "URL video Dropbox",
+                    labelStyle: const TextStyle(color: labelColor),
+                    filled: true,
+                    fillColor: fieldColor,
+                    hintText: "https://www.dropbox.com/...dl=0",
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // TRAILER URL
+                const Text(
+                  'URL del trailer (YouTube)',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: trailerUrl,
-                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.link, color: Colors.white70),
                     suffixIcon: trailerUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(
-                              Icons.clear,
-                              color: Colors.white70,
-                            ),
+                            icon: const Icon(Icons.clear, color: Colors.white70),
                             onPressed: () {
                               trailerUrl.clear();
                               setState(() {});
@@ -329,11 +302,10 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                           )
                         : null,
                     border: const OutlineInputBorder(),
-                    labelText: "https://youtube.com/watch?v=...",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelText: "URL trailer YouTube",
+                    labelStyle: const TextStyle(color: labelColor),
                     filled: true,
-                    fillColor: const Color.fromARGB(197, 116, 116, 116),
-                    hintText: "Pega aquí el enlace completo de YouTube",
+                    fillColor: fieldColor,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -341,57 +313,60 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                 // Título
                 TextField(
                   controller: titulo,
-                  style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    labelText: "Título",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    prefixIcon: Icon(Icons.movie, color: Colors.white70),
                     border: OutlineInputBorder(),
+                    labelText: "Título",
+                    labelStyle: TextStyle(color: labelColor),
                     filled: true,
-                    fillColor: Color.fromARGB(197, 116, 116, 116),
+                    fillColor: fieldColor,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Descripción
                 TextField(
                   controller: descripcion,
-                  style: const TextStyle(color: Colors.white),
+                  maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: "Descripción",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    prefixIcon:
+                        Icon(Icons.description, color: Colors.white70),
                     border: OutlineInputBorder(),
+                    labelText: "Descripción",
+                    labelStyle: TextStyle(color: labelColor),
                     filled: true,
-                    fillColor: Color.fromARGB(197, 116, 116, 116),
+                    fillColor: fieldColor,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Duración
                 TextField(
                   controller: duracion,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    labelText: "Duración (min)",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    prefixIcon: Icon(Icons.timer, color: Colors.white70),
                     border: OutlineInputBorder(),
+                    labelText: "Duración (minutos)",
+                    labelStyle: TextStyle(color: labelColor),
                     filled: true,
-                    fillColor: Color.fromARGB(197, 116, 116, 116),
+                    fillColor: fieldColor,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                // Edad
+                // Edad recomendada
                 TextField(
                   controller: edadRecomendada,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    labelText: "Edad recomendada",
-                    labelStyle: TextStyle(color: Colors.white70),
+                    prefixIcon: Icon(Icons.confirmation_number,
+                        color: Colors.white70),
                     border: OutlineInputBorder(),
+                    labelText: "Edad recomendada",
+                    labelStyle: TextStyle(color: labelColor),
                     filled: true,
-                    fillColor: Color.fromARGB(197, 116, 116, 116),
+                    fillColor: fieldColor,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -400,55 +375,58 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                 Row(
                   children: [
                     const Text(
-                      'Visibilidad: ',
+                      'Visibilidad:',
                       style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
+                    const SizedBox(width: 12),
                     DropdownButton<bool>(
                       value: _esPublica,
-                      style: const TextStyle(color: Colors.white),
-                      dropdownColor: Colors.grey[800],
+                      dropdownColor: Colors.black87,
                       items: const [
-                        DropdownMenuItem(value: true, child: Text('Pública')),
-                        DropdownMenuItem(value: false, child: Text('Privada')),
+                        DropdownMenuItem(
+                          value: true,
+                          child: Text('Pública',
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Privada',
+                              style: TextStyle(color: Colors.white)),
+                        ),
                       ],
-                      onChanged: (val) =>
-                          setState(() => _esPublica = val ?? true),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _esPublica = val);
+                        }
+                      },
                     ),
                   ],
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 16),
+
                 // Categoría
                 Row(
                   children: [
                     const Text(
-                      'Categoria:',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      'Categoría:',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     const SizedBox(width: 12),
                     DropdownButton<String>(
                       value: _categoriaSeleccionada,
-                      dropdownColor: Colors.grey[800],
+                      dropdownColor: Colors.black87,
                       style: const TextStyle(color: Colors.white),
-                        items: const [
+                      items: const [
                         DropdownMenuItem(
-                          value: 'Tendencia',
-                          child: Text('Tendencia'),
-                        ),
+                            value: 'Tendencia', child: Text('Tendencia')),
                         DropdownMenuItem(
-                          value: 'Acción',
-                          child: Text('Acción'),
-                        ),
+                            value: 'Acción', child: Text('Acción')),
                         DropdownMenuItem(
-                          value: 'Miedo', 
-                          child: Text('Miedo')),
+                            value: 'Miedo', child: Text('Miedo')),
                         DropdownMenuItem(
-                          value: 'Aventura',
-                          child: Text('Aventura'),
-                        ),
+                            value: 'Aventura', child: Text('Aventura')),
                         DropdownMenuItem(
-                          value: 'Clásica',
-                          child: Text('Clásica'),
-                        ),
+                            value: 'Clásica', child: Text('Clásica')),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -458,23 +436,24 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     ),
                   ],
                 ),
-                                const SizedBox(height: 5),
+                const SizedBox(height: 24),
 
+                // Botón Actualizar
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: actualizarVideo,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 110, 31, 93),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor:
+                          const Color.fromARGB(255, 110, 31, 93),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
-                      'Actualizar Video',
+                      'Actualizar película',
                       style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
             ),
           ),

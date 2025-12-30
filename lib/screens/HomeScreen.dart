@@ -39,7 +39,7 @@ class _homeScreenState extends State<homeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Drawer
+      // Drawer (sin cambios)
       drawer: Drawer(
         child: ListView(
           children: [
@@ -89,20 +89,15 @@ class _homeScreenState extends State<homeScreen> {
         ),
         backgroundColor: const Color.fromARGB(255, 110, 31, 93),
         elevation: 0,
-
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white70),
             onPressed: () async {
               await supabase.auth.signOut();
-
-              // ← MOSTRAR DIALOGO ANTES de navegar
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text(
-                    '¡Sesión cerrada!',
-                  ),
+                  title: const Text('¡Sesión cerrada!'),
                   content: const Text(
                     'Sesión cerrada exitosamente',
                     textAlign: TextAlign.center,
@@ -171,6 +166,7 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                   const SizedBox(height: 32),
 
+                  // CONTAINER PRINCIPAL CON FOTO ✅
                   Container(
                     constraints: const BoxConstraints(maxWidth: 350),
                     padding: const EdgeInsets.all(32),
@@ -187,8 +183,59 @@ class _homeScreenState extends State<homeScreen> {
                     ),
                     child: Column(
                       children: [
+                        // 🖼️ FOTO DE PERFIL NUEVA ✅
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black54,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: usuarioData?['perfil_url'] != null &&
+                                    usuarioData!['perfil_url'].isNotEmpty
+                                ? Image.network(
+                                    usuarioData!['perfil_url'],
+                                    fit: BoxFit.cover,
+                                    width: 100,
+                                    height: 100,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.white70,
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.white70,
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // NOMBRE (debajo de la foto)
                         Text(
-                          // si no tienes 'apellido' en la tabla, solo usa 'nombre'
                           '${usuarioData?['nombre'] ?? ''} ${usuarioData?['apellido'] ?? ''}',
                           style: const TextStyle(
                             fontSize: 24,
@@ -248,11 +295,11 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                   const SizedBox(height: 40),
 
+                  // BOTONES (sin cambios)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/catalogo'),
+                      onPressed: () => Navigator.pushNamed(context, '/catalogo'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
                         'Revisar catálogo',
@@ -268,20 +315,14 @@ class _homeScreenState extends State<homeScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/agregarPelicula'),
+                      onPressed: () => Navigator.pushNamed(context, '/agregarPelicula'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
                         'Agregar nuevas películas',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          167,
-                          45,
-                          158,
-                        ),
+                        backgroundColor: const Color.fromARGB(255, 167, 45, 158),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),

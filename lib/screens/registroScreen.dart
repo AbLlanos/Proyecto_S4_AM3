@@ -1,12 +1,60 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/loginScreen.dart';
-//import 'package:firebase_database/firebase_database.dart';
-//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 
-class registroScreen extends StatelessWidget {
+final supabase = Supabase.instance.client;
+
+class registroScreen extends StatefulWidget {
   const registroScreen({super.key});
+
+  @override
+  State<registroScreen> createState() => _registroScreenState();
+}
+
+class _registroScreenState extends State<registroScreen> {
+  Uint8List? _perfilBytes;
+  String? _perfilExt;
+  static const double maxImageSizeBytes = 2 * 1024 * 1024; // 2 MB
+
+  Future<void> _pickPerfil() async {
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (res == null || res.files.single.bytes == null) return;
+
+    final file = res.files.single;
+    final size = file.size.toDouble();
+
+    if (size > maxImageSizeBytes) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Imagen muy grande'),
+            content: Text('La imagen de perfil no puede superar los 2 MB.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _perfilBytes = file.bytes;
+        _perfilExt = file.extension ?? 'jpg';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +71,6 @@ class registroScreen extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Fondo con imagen
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -35,14 +82,13 @@ class registroScreen extends StatelessWidget {
             ),
             child: Container(color: const Color(0xAA000000)),
           ),
-
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 350),
                 padding: const EdgeInsets.all(24),
-                child: formularioRegistro(context),
+                child: formularioRegistro(context, _pickPerfil, _perfilBytes, _perfilExt),
               ),
             ),
           ),
@@ -52,23 +98,12 @@ class registroScreen extends StatelessWidget {
   }
 }
 
-void irPantallaLogin(context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => loginScreen()),
-  );
-}
-
-void irPantallaLoginRegistrado(context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => loginScreen()),
-  );
-}
-
-//Funcion de registro
-
-Widget formularioRegistro(context) {
+Widget formularioRegistro(
+  BuildContext context,
+  Future<void> Function() pickPerfil,
+  Uint8List? perfilBytes,
+  String? perfilExt, // ← CAMBIADO: nullable
+) {
   TextEditingController nombre = TextEditingController();
   TextEditingController correo = TextEditingController();
   TextEditingController telefono = TextEditingController();
@@ -94,7 +129,42 @@ Widget formularioRegistro(context) {
           ),
         ),
 
-        // NOMBRE
+        // IMAGEN DE PERFIL
+        const Text(
+          'Imagen de perfil (JPG/PNG, máx 2 MB)',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: pickPerfil,
+            icon: const Icon(Icons.person_add, size: 28),
+            label: Text(
+              perfilBytes != null
+                  ? 'Imagen seleccionada (${(perfilBytes!.lengthInBytes / 1024).toStringAsFixed(1)} KB)'
+                  : 'Seleccionar imagen de perfil',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // CAMPOS DE TEXTO (iguales)
         TextField(
           controller: nombre,
           decoration: InputDecoration(
@@ -108,7 +178,6 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 12),
 
-        // CORREO
         TextField(
           controller: correo,
           decoration: InputDecoration(
@@ -122,7 +191,6 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 12),
 
-        // CONTRASEÑA
         TextField(
           controller: contrasenia,
           obscureText: true,
@@ -137,7 +205,6 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 12),
 
-        // TELÉFONO
         TextField(
           controller: telefono,
           keyboardType: TextInputType.number,
@@ -154,7 +221,6 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 12),
 
-        // PAÍS
         TextField(
           controller: pais,
           decoration: InputDecoration(
@@ -168,7 +234,6 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 12),
 
-        // FECHA
         TextField(
           controller: fechaNacimiento,
           decoration: InputDecoration(
@@ -182,7 +247,7 @@ Widget formularioRegistro(context) {
         ),
         const SizedBox(height: 24),
 
-        // BOTÓN
+        // BOTÓN CORREGIDO 
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -194,19 +259,20 @@ Widget formularioRegistro(context) {
               fechaNacimiento,
               contrasenia,
               context,
+              perfilBytes,
+              perfilExt, // ← SIN ! porque puede ser null
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 110, 31, 93),
             ),
             child: const Text(
               'Registrarse',
-              style: TextStyle(color: labelColor),
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ),
         const SizedBox(height: 16),
 
-        // LINK LOGIN
         Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -232,60 +298,61 @@ Widget formularioRegistro(context) {
   );
 }
 
+// FUNCIÓN PRINCIPAL CORREGIDA
 Future<void> registroVixUsuarioSupabase(
-  nombre,
-  correo,
-  telefono,
-  pais,
-  fechaNacimiento,
-  contrasenia,
-  context,
+  TextEditingController nombre,
+  TextEditingController correo,
+  TextEditingController telefono,
+  TextEditingController pais,
+  TextEditingController fechaNacimiento,
+  TextEditingController contrasenia,
+  BuildContext context,
+  Uint8List? perfilBytes,
+  String? perfilExt, // ← nullable
 ) async {
-  // Validación básica de campos vacíos
+  // Validaciones (iguales)
   if (correo.text.isEmpty ||
       contrasenia.text.isEmpty ||
       nombre.text.isEmpty ||
       telefono.text.isEmpty ||
       pais.text.isEmpty ||
       fechaNacimiento.text.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error'),
-        content: Text('Por favor complete todos los campos'),
-
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Por favor complete todos los campos'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
     return;
   }
 
-  // Validar teléfono
   final tel = telefono.text.trim();
   final soloNumeros = RegExp(r'^[0-9]+$');
-
   if (!soloNumeros.hasMatch(tel) || tel.length != 10) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Teléfono inválido'),
-        content: Text(
-          'El número de teléfono debe tener exactamente 10 dígitos numéricos.',
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Teléfono inválido'),
+          content: const Text('El número de teléfono debe tener exactamente 10 dígitos numéricos.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         ),
-
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
     return;
   }
 
@@ -306,6 +373,16 @@ Future<void> registroVixUsuarioSupabase(
       throw Exception('No se pudo crear el usuario');
     }
 
+    // SUBIR IMAGEN (SOLO SI AMBOS EXISTEN)
+    String? perfilUrl;
+    if (perfilBytes != null && perfilExt != null) {
+      print('🖼️ Subiendo imagen ${perfilBytes.lengthInBytes} bytes');
+      perfilUrl = await _subirImagenPerfil(user.id, perfilBytes, perfilExt);
+      print(' URL: $perfilUrl');
+    } else {
+      print('ℹ️ Sin imagen de perfil');
+    }
+
     await guardarUsuarioEnSupabase(
       user.id,
       nombre.text.trim(),
@@ -313,75 +390,93 @@ Future<void> registroVixUsuarioSupabase(
       tel,
       pais.text.trim(),
       fechaNacimiento.text.trim(),
+      perfilUrl,
     );
 
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Registro exitoso'),
-        content: const Text(
-          'Tu cuenta se ha creado correctamente. Ahora puedes iniciar sesión.',
+    if (context.mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(' Registro exitoso'),
+          content: const Text(
+            'Tu cuenta se ha creado correctamente.\nAhora puedes iniciar sesión.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-
-    Navigator.pushNamed(context, '/login');
-  } on AuthException catch (e) {
-    final msg = e.message.toLowerCase();
-    String mensaje;
-
-    if (msg.contains('user already registered') ||
-        msg.contains('already exists')) {
-      mensaje = 'Ya existe una cuenta registrada con este correo.';
-    } else if (msg.contains('password') && msg.contains('weak') ||
-        msg.contains('password should be at least')) {
-      mensaje = 'La contraseña es muy débil. Use una contraseña más segura.';
-    } else if (msg.contains('email') && msg.contains('invalid')) {
-      mensaje = 'Correo electrónico inválido.';
-    } else if (msg.contains('invalid login credentials')) {
-      mensaje = 'Correo electrónico o contraseña incorrectos.';
-    } else if (msg.contains('email not confirmed')) {
-      mensaje = 'Debe confirmar su correo electrónico antes de continuar.';
-    } else if (msg.contains('rate limit')) {
-      mensaje = 'Demasiados intentos. Intente nuevamente más tarde.';
-    } else {
-      mensaje = e.message;
+      );
+      Navigator.pushNamed(context, '/login');
     }
+  } on AuthException catch (e) {
+    if (context.mounted) {
+      final msg = e.message.toLowerCase();
+      String mensaje = e.message;
 
-    // Mostrar alerta
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error de Registro'),
-        content: Text(mensaje),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+      if (msg.contains('user already registered') || msg.contains('already exists')) {
+        mensaje = 'Ya existe una cuenta con este correo.';
+      } else if (msg.contains('password') && msg.contains('weak')) {
+        mensaje = 'La contraseña es muy débil.';
+      } else if (msg.contains('email') && msg.contains('invalid')) {
+        mensaje = 'Correo electrónico inválido.';
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error de Registro'),
+          content: Text(mensaje),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   } catch (e) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text('Error de conexión: $e'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Error: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+}
+
+// FUNCIÓN DE SUBIDA FINAL
+Future<String?> _subirImagenPerfil(String userId, Uint8List imageBytes, String ext) async {
+  try {
+    final bucket = supabase.storage.from('vixDocumentaryRepository');
+    final path = 'usuarios/$userId/perfil.$ext';
+    
+    print('📤 Subiendo a: $path');
+    
+    await bucket.uploadBinary(
+      path,
+      imageBytes,
+      fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
     );
+    
+    final url = bucket.getPublicUrl(path);
+    print(' Subida exitosa: $url');
+    return url;
+  } catch (e) {
+    print('💥 Error subiendo imagen: $e');
+    return null;
   }
 }
 
@@ -392,6 +487,7 @@ Future<void> guardarUsuarioEnSupabase(
   String telefono,
   String pais,
   String fechaNacimiento,
+  String? perfilUrl,
 ) async {
   await supabase.from('usuariosVix').insert({
     'id': uid,
@@ -400,125 +496,21 @@ Future<void> guardarUsuarioEnSupabase(
     'telefono': telefono,
     'pais': pais,
     'fechaNacimiento': fechaNacimiento,
-    'rol':'usuario',
+    'perfil_url': perfilUrl,
+    'rol': 'usuario',
   });
 }
 
-/*
-Future<void> RegistroVixUsuario(
-  nombre,
-  correo,
-  telefono,
-  pais,
-  fechaNacimiento,
-  contrasenia,
-  context,
-) async {
-  if (correo.text.isEmpty || contrasenia.text.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: const Text('Por favor complete todos los campos'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-    return;
-  }
-
-  try {
-    final credential = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-          email: correo.text,
-          password: contrasenia.text,
-        );
-
-    // GUARDAR DATOS DEL USUARIO en Firebase usando UID
-    await guardarUsuarioEnFirebase(
-      credential.user!.uid,
-      nombre.text,
-      correo.text,
-      telefono.text,
-      pais.text,
-      fechaNacimiento.text,
-    );
-
-    Navigator.pushNamed(context, '/login');
-  } on FirebaseAuthException catch (e) {
-    String mensaje = 'Error desconocido';
-    switch (e.code) {
-      case 'weak-password':
-        mensaje = 'La contraseña es muy débil. Use al menos 6 caracteres.';
-        break;
-      case 'email-already-in-use':
-        mensaje = 'El correo ya está registrado.';
-        break;
-      case 'invalid-email':
-        mensaje = 'Correo electrónico inválido.';
-        break;
-      default:
-        mensaje = e.message ?? 'Error: ${e.code}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error de Registro'),
-          content: Text(mensaje),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  } catch (e) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text('Error de conexión: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+void irPantallaLogin(context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => loginScreen()),
+  );
 }
 
-// Función para guardar datos del usuario en Firebase
-Future<void> guardarUsuarioEnFirebase(
-  String uid,
-  String nombre,
-  String correo,
-  String telefono,
-  String pais,
-  String fechaNacimiento,
-) async {
-  DatabaseReference ref = FirebaseDatabase.instance.ref("usuarios/$uid");
-
-  await ref.set({
-    "nombre": nombre,
-    "correo": correo,
-    "telefono": telefono,
-    "pais": pais,
-    "fechaNacimiento": fechaNacimiento,
-  });
+void irPantallaLoginRegistrado(context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => loginScreen()),
+  );
 }
-
-*/

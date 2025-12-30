@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/catalogoScreen.dart';
-import 'package:proyecto_s4_am3/screens/registroScreen.dart';
+import 'package:proyecto_s4_am3/screens/registroScreen.dart' hide supabase;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class loginScreen extends StatelessWidget {
@@ -274,95 +274,3 @@ Future<void> loginVixUsuarioSupabase(correo, contrasenia, context) async {
     );
   }
 }
-
-
-
-/*
-Future<void> loginVixUsuario(correo, contrasenia, context) async {
-  if (correo.text.isEmpty || contrasenia.text.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error de Login'),
-          content: const Text('Por favor complete todos los campos'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-    return;
-  }
-
-  try {
-    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: correo.text.trim(),
-      password: contrasenia.text.trim(),
-    );
-
-    // CARGAR DATOS DEL USUARIO y navegar
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/home',
-      (route) => false,
-      arguments: credential.user!.uid,
-    );
-
-    //Alertas de errores de login
-  } on FirebaseAuthException catch (e) {
-    String mensaje = 'Error desconocido';
-    switch (e.code) {
-      case 'user-not-found':
-        mensaje = 'No existe cuenta con este correo.';
-        break;
-      case 'wrong-password':
-        mensaje = 'Contraseña incorrecta.';
-        break;
-      case 'invalid-email':
-        mensaje = 'Correo electrónico inválido.';
-        break;
-      case 'too-many-requests':
-        mensaje = 'Demasiados intentos. Intente más tarde.';
-        break;
-      default:
-        mensaje = e.message ?? 'Error: ${e.code}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error de Login'),
-          content: Text(mensaje),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  } catch (e) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text('Error de conexión: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-*/

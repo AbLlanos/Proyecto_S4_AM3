@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:proyecto_s4_am3/main.dart';
-import 'package:proyecto_s4_am3/screens/editarDatosVideoScreen.dart'
-    hide supabase;
+import 'package:proyecto_s4_am3/screens/editarDatosVideoScreen.dart' hide supabase;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,18 +40,17 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
 
     final response = await supabase
         .from('usuariosVix')
-        .select('nombre, correo')
+        .select('nombre, correo, perfil_url')
         .eq('id', user.id)
         .maybeSingle();
 
     if (mounted) {
       setState(() {
-        _userData =
-            response ??
-            {
-              'nombre': user.email?.split('@')[0].toUpperCase(),
-              'email': user.email,
-            };
+        _userData = response ?? {
+          'nombre': user.email?.split('@')[0].toUpperCase(),
+          'correo': user.email,
+          'perfil_url': null,
+        };
       });
     }
   }
@@ -88,7 +86,6 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
 
     for (String userId in userIds) {
       try {
-        // Intenta usuariosVix primero
         final response = await supabase
             .from('usuariosVix')
             .select('id, nombre')
@@ -100,7 +97,6 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
           continue;
         }
 
-        // Fallback usuarioNotas
         final responseNotas = await supabase
             .from('usuarioNotas')
             .select()
@@ -141,12 +137,26 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            // Header del Drawer 
-            Container(
-              height: 150,
-              width: double.infinity,
+            //  Header ANTI-overflow CON FOTO
+            UserAccountsDrawerHeader(
+              accountName: _userData != null
+                  ? Text(
+                      _userData!['nombre']?.toString() ?? 'Usuario',
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                    )
+                  : const Text(
+                      'Cargando...',
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                    ),
+              accountEmail: _userData != null
+                  ? Text(
+                      _userData!['correo']?.toString() ?? '',
+                      style: const TextStyle(fontSize: 14, color: Colors.white70),
+                    )
+                  : null,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -154,66 +164,86 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
                   colors: [Colors.purple[400]!, Colors.purple[800]!],
                 ),
               ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  const Text(
-                    "VixScienceMov",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  //  USUARIO SEGURO
-                  if (_userData != null) ...[
-                    Text(
-                      _userData!['nombre']?.toString() ?? 'Usuario',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                  ] else ...[
-                    const Text(
-                      'Cargando usuario...',
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
-                    ),
-                    const SizedBox(height: 12),
-                    const CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+              currentAccountPicture: Container(
+                width: 65,
+                height: 65,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black54,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
-                ],
+                ),
+                child: ClipOval(
+                  child: _userData?['perfil_url'] != null &&
+                          _userData!['perfil_url'].isNotEmpty
+                      ? Image.network(
+                          _userData!['perfil_url'],
+                          fit: BoxFit.cover,
+                          width: 65,
+                          height: 65,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.person,
+                            size: 32,
+                            color: Colors.white70,
+                          ),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.white24,
+                              child: const Icon(
+                                Icons.person,
+                                size: 32,
+                                color: Colors.white54,
+                              ),
+                            );
+                          },
+                        )
+                      : Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white24,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 32,
+                            color: Colors.white70,
+                          ),
+                        ),
+                ),
               ),
             ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.red),
-                    title: const Text("Cerrar Sesión"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _cerrarSesion();
-                    },
+            // LOGO
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: const Center(
+                child: Text(
+                  "VixScienceMov",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF6E1F5D),
                   ),
-                ],
+                ),
               ),
+            ),
+            // Menú
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Cerrar Sesión"),
+              onTap: () {
+                Navigator.pop(context);
+                _cerrarSesion();
+              },
             ),
           ],
         ),
       ),
 
-      // AppBar y resto SIN cambios (funciona perfecto)
       appBar: AppBar(
         title: const Text(
           'Catálogo VixScienceMov',
@@ -250,7 +280,6 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
           : FutureBuilder<List<Map<String, dynamic>>>(
               future: _videosPublicosFuture,
               builder: (context, snapshot) {
-                
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                     padding: EdgeInsets.all(50),
@@ -278,22 +307,7 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   }
 
   Widget _buildCategoriasPreviews(List<Map<String, dynamic>> allVideos) {
-    final categories = [
-      'Tendencia',
-      'Acción',
-      'Miedo',
-      'Aventura',
-      'Clásica',
-    ];
-  /*
-        final categories = [
-      'Educativo',
-      'Gameplay',
-      'Tutorial',
-      'Entretenimiento',
-      'Acción',
-    ];
-*/
+    final categories = ['Tendencia', 'Acción', 'Miedo', 'Aventura', 'Clásica'];
 
     final filteredVideos = _filtroCategoria == 'todos'
         ? allVideos
@@ -411,7 +425,7 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   }
 }
 
-// VideoDetalleModal (IDENTICO - funciona perfecto)
+//  VideoDetalleModal CON BOTÓN DROPBOX ABAJO DE DESCRIPCIÓN
 class VideoDetalleModal extends StatefulWidget {
   final Map<String, dynamic> video;
   const VideoDetalleModal({super.key, required this.video});
@@ -437,21 +451,40 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     if (videoUrl != null && videoUrl.isNotEmpty) {
       try {
         _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-
         await _controller!.initialize();
-
         _controller!
           ..setLooping(true)
           ..setVolume(1.0);
-
-        //..play();
-
         if (mounted) {
           setState(() => _isInitialized = true);
         }
       } catch (e) {
         print('Error inicializando video: $e');
       }
+    }
+  }
+
+  //  BOTÓN VER PELÍCULA COMPLETA EN DROPBOX (raw=1)
+  Future<void> _launchVideoCompleto(String? videoUrl) async {
+    print('Video completo URL: "$videoUrl"');
+    if (videoUrl == null || videoUrl.isEmpty || videoUrl == 'null') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay video disponible')),
+      );
+      return;
+    }
+
+    // Dropbox: dl=0 → raw=1 para streaming
+    final fixedUrl = videoUrl.replaceAll('dl=0', 'raw=1');
+    final uri = Uri.parse(fixedUrl);
+    print('Abriendo video completo: $uri');
+    
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se puede abrir el video')),
+      );
     }
   }
 
@@ -464,8 +497,10 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
       return;
     }
 
-    final uri = Uri.parse(trailerUrl);
-    print('Abriendo URI: $uri');
+    final fixedUrl = trailerUrl.replaceAll('dl=0', 'raw=1');
+    final uri = Uri.parse(fixedUrl);
+    print('Abriendo trailer: $uri');
+    
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -486,6 +521,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     final duracion = widget.video['duracion'] ?? 'N/A';
     final edad = widget.video['edad_recomendada'] ?? 'N/A';
     final trailerUrl = widget.video['trailer_url'];
+    final videoCompletoUrl = widget.video['video_url']; // ← VIDEO COMPLETO
     final portadaUrl = widget.video['portada_url'] ?? '';
 
     return Scaffold(
@@ -509,7 +545,6 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                     color: Colors.grey[900],
                   ),
                 ),
-
                 // CONTENIDO
                 Padding(
                   padding: const EdgeInsets.all(20),
@@ -525,13 +560,10 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
                       // INFO + TRAILER
                       Row(
                         children: [
-                          // ▶ TRAILER PRIMERO
                           OutlinedButton.icon(
                             onPressed: () => _launchTrailer(trailerUrl),
                             icon: const Icon(Icons.play_arrow),
@@ -544,17 +576,14 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                               ),
                             ),
                           ),
-
                           const SizedBox(width: 12),
-
                           _infoChip(Icons.timer, '$duracion min'),
                           const SizedBox(width: 8),
                           _infoChip(Icons.lock, '$edad+'),
                         ],
                       ),
-
-                      Text(""),
-                      //  DESCRIPCIÓN
+                      const SizedBox(height: 16),
+                      // DESCRIPCIÓN
                       Text(
                         widget.video['descripcion'] ?? '',
                         style: const TextStyle(
@@ -564,11 +593,27 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                         ),
                         textAlign: TextAlign.justify,
                       ),
-
-                      const SizedBox(height: 32),
-
-                      // 🎥 VIDEO ABAJO
-                      // 🎥 VIDEO ABAJO
+                      const SizedBox(height: 24),
+                      //  BOTÓN VER PELÍCULA COMPLETA (DROPBOX)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _launchVideoCompleto(videoCompletoUrl),
+                          icon: const Icon(Icons.play_circle, color: Color.fromARGB(255, 95, 7, 7)),
+                          label: const Text(
+                            'Ver película completa',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // 🎥 PREVIEW VIDEO (mini)
                       if (_isInitialized && _controller != null)
                         AspectRatio(
                           aspectRatio: _controller!.value.aspectRatio,
@@ -578,8 +623,6 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                               alignment: Alignment.center,
                               children: [
                                 VideoPlayer(_controller!),
-
-                                // ▶️ BOTÓN PLAY / PAUSE
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -589,9 +632,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                                     });
                                   },
                                   child: AnimatedOpacity(
-                                    opacity: _controller!.value.isPlaying
-                                        ? 0.0
-                                        : 1.0,
+                                    opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
                                     duration: const Duration(milliseconds: 300),
                                     child: Container(
                                       width: 64,
@@ -628,15 +669,13 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                             size: 60,
                           ),
                         ),
-
                       const SizedBox(height: 40),
                     ],
                   ),
                 ),
               ],
             ),
-
-            //  BOTÓN CERRAR ARRIBA IZQUIERDA
+            // BOTÓN CERRAR
             Positioned(
               top: MediaQuery.of(context).padding.top + 50,
               left: 16,
@@ -664,6 +703,7 @@ Widget _infoChip(IconData icon, String text) {
       borderRadius: BorderRadius.circular(20),
     ),
     child: Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: Colors.white70, size: 16),
         const SizedBox(width: 6),
