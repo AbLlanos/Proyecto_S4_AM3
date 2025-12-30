@@ -19,7 +19,7 @@ Future<void> main() async {
   /*
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const VixVideoApp());
+  runApp(const VixScienceMovApp());
 
   Future<void> main() async {*/
 
@@ -29,11 +29,11 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRidWllcW1yeHh3YnR5ZmFoaWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzODY5MjQsImV4cCI6MjA4MTk2MjkyNH0.J6-r4u8ma4JF322fI-osU2_eW3TEpm72FpvXpBZiBV8',
   );
 
-  runApp(VixVideoApp());
+  runApp(VixScienceMovApp());
 }
 
-class VixVideoApp extends StatelessWidget {
-  const VixVideoApp({super.key});
+class VixScienceMovApp extends StatelessWidget {
+  const VixScienceMovApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
     routes: {
@@ -46,7 +46,7 @@ class VixVideoApp extends StatelessWidget {
       '/home': (context) => homeScreen(),
     },
 
-    title: 'VixVideo',
+    title: 'VixScienceMov',
     home: const WelcomeScreen(),
     debugShowCheckedModeBanner: false,
   );
@@ -59,7 +59,7 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text(
-        'VixVideo',
+        'VixScienceMov',
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 24,
@@ -107,7 +107,7 @@ class WelcomeScreen extends StatelessWidget {
                       MainAxisAlignment.center, // ← ALINEA COLUMNA AL CENTRO
                   children: [
                     const Text(
-                      '¡Bienvenido a VixVideo!',
+                      '¡Bienvenido a VixScienceMov!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
@@ -354,7 +354,7 @@ class WelcomeScreen extends StatelessWidget {
                         Icon(Icons.email, color: Colors.white70, size: 16),
                         SizedBox(width: 8),
                         Text(
-                          'soporte@VixVideo.com',
+                          'soporte@VixScienceMov.com',
                           style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
@@ -366,7 +366,7 @@ class WelcomeScreen extends StatelessWidget {
                         Icon(Icons.copyright, color: Colors.white54, size: 14),
                         SizedBox(width: 8),
                         Text(
-                          '2025 VixVideo',
+                          '2025 VixScienceMov',
                           style: TextStyle(color: Colors.white54, fontSize: 11),
                         ),
                       ],

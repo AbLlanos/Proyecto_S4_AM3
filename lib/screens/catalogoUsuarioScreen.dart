@@ -18,111 +18,113 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   String _filtroCategoria = 'todos';
   Map<String, dynamic>? _userData;
 
-  // ✅ Caché de Future para videos públicos SOLO
+  // Caché de Future para videos públicos SOLO
   Future<List<Map<String, dynamic>>>? _videosPublicosFuture;
 
   @override
   void initState() {
     super.initState();
     _cargarDatosUsuario();
-    _loadVideos(); // ← Una sola carga inicial
+    _loadVideos();
   }
 
-  // ✅ Cargar UNA VEZ SOLO en initState
   Future<void> _loadVideos() async {
     setState(() {
       _videosPublicosFuture = leerVideosPublicos();
     });
   }
 
+  // CARGAR DATOS USUARIO MEJORADO
   Future<void> _cargarDatosUsuario() async {
-    try {
-      final user = supabase.auth.currentUser;
-      print('currentUser ID: ${user?.id}');
-      print('currentUser email: ${user?.email ?? "NULL"}');
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
 
-      if (user == null) {
-        print('No hay usuario autenticado');
-        return;
-      }
+    final response = await supabase
+        .from('usuariosVix')
+        .select('nombre, correo')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      // PRUEBA 1: Consulta específica con logs
-      print('Buscando usuario ID: ${user.id} en usuariosVix');
-      final response = await supabase
-          .from('usuariosVix')
-          .select('id, nombre, email, rol')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      print('Response TU usuario: $response');
-
-      if (mounted) {
-        setState(() {
-          if (response != null) {
-            _userData = response;
-            print('Usuario cargado: ${_userData!['nombre']}');
-          } else {
-            // FALLBACK: usar datos del auth
-            _userData = {
-              'nombre': user.email?.split('@')[0].toUpperCase() ?? 'Usuario',
-              'email': user.email ?? 'Sin email',
+    if (mounted) {
+      setState(() {
+        _userData =
+            response ??
+            {
+              'nombre': user.email?.split('@')[0].toUpperCase(),
+              'email': user.email,
             };
-            print('🔄 Fallback usado: ${_userData!['nombre']}');
-          }
-        });
-      }
-    } catch (e, stack) {
-      print('ERROR completo: $e');
-      print('Stack: $stack');
-      if (mounted) {
-        setState(() {
-          _userData = {'nombre': 'Error', 'email': 'Revisa logs'};
-        });
-      }
+      });
     }
   }
 
-  // Obtener emails de todos los autores
+  Future<void> _cerrarSesion() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmado == true) {
+      await supabase.auth.signOut();
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
+
   Future<Map<String, String>> _getAllUserEmails(Set<String> userIds) async {
     print('Buscando NOMBRES para userIds: $userIds');
     final names = <String, String>{};
 
     for (String userId in userIds) {
       try {
-        print('Buscando userId: $userId en usuariosVix');
+        // Intenta usuariosVix primero
         final response = await supabase
             .from('usuariosVix')
             .select('id, nombre')
             .eq('id', userId)
             .maybeSingle();
 
-        print('Response para $userId: $response');
-
-        if (response != null) {
-          names[userId] = response['nombre'] ?? 'Sin nombre';
-        } else {
-          names[userId] = 'No encontrado';
+        if (response != null && response['nombre'] != null) {
+          names[userId] = response['nombre'];
+          continue;
         }
+
+        // Fallback usuarioNotas
+        final responseNotas = await supabase
+            .from('usuarioNotas')
+            .select()
+            .eq('id', userId)
+            .maybeSingle();
+
+        names[userId] = responseNotas?['nombre'] ?? 'Usuario';
       } catch (e) {
         print('Error para $userId: $e');
-        names[userId] = 'Usuario desconocido';
+        names[userId] = 'Usuario';
       }
     }
-    print('Nombres encontrados: $names');
     return names;
   }
 
-  // Leer videos públicos OPTIMIZADO
   Future<List<Map<String, dynamic>>> leerVideosPublicos() async {
     List<Map<String, dynamic>> videos = [];
 
-    // ✅ SIEMPRE carga TODOS para mostrar todas las categorías
     final response = await supabase
         .from('contenidoVix')
         .select()
         .eq('es_publica', true)
         .order('fecha_subida', ascending: false)
-        .limit(100); // Más videos para categorías completas
+        .limit(100);
 
     videos = List<Map<String, dynamic>>.from(response);
 
@@ -130,8 +132,7 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
     final emails = await _getAllUserEmails(userIds);
 
     for (var video in videos) {
-      video['author_email'] =
-          emails[video['user_id'].toString()] ?? 'Cargando...';
+      video['author_email'] = emails[video['user_id'].toString()] ?? 'Usuario';
     }
     return videos;
   }
@@ -139,9 +140,83 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          children: [
+            // Header del Drawer 
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.purple[400]!, Colors.purple[800]!],
+                ),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
+                  const Text(
+                    "VixScienceMov",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  //  USUARIO SEGURO
+                  if (_userData != null) ...[
+                    Text(
+                      _userData!['nombre']?.toString() ?? 'Usuario',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                  ] else ...[
+                    const Text(
+                      'Cargando usuario...',
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 12),
+                    const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.red),
+                    title: const Text("Cerrar Sesión"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _cerrarSesion();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // AppBar y resto SIN cambios (funciona perfecto)
       appBar: AppBar(
         title: const Text(
-          'Catálogo VixVideo',
+          'Catálogo VixScienceMov',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color.fromARGB(255, 110, 31, 93),
@@ -155,6 +230,12 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
             ),
           ),
         ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
           IconButton(
             onPressed: _loadVideos,
@@ -163,11 +244,13 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
           ),
         ],
       ),
+
       body: _videosPublicosFuture == null
           ? const Center(child: CircularProgressIndicator())
           : FutureBuilder<List<Map<String, dynamic>>>(
               future: _videosPublicosFuture,
               builder: (context, snapshot) {
+                
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                     padding: EdgeInsets.all(50),
@@ -194,17 +277,24 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
     );
   }
 
-  //   ÚNICO CONTENIDO: Secciones Netflix
   Widget _buildCategoriasPreviews(List<Map<String, dynamic>> allVideos) {
     final categories = [
+      'Tendencia',
+      'Acción',
+      'Miedo',
+      'Aventura',
+      'Clásica',
+    ];
+  /*
+        final categories = [
       'Educativo',
       'Gameplay',
       'Tutorial',
       'Entretenimiento',
       'Acción',
     ];
+*/
 
-    // ✅ Filtrar por categoría seleccionada
     final filteredVideos = _filtroCategoria == 'todos'
         ? allVideos
         : allVideos.where((v) => v['categoria'] == _filtroCategoria).toList();
@@ -218,7 +308,7 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
           children: categories.map((categoria) {
             final videosCategoria = filteredVideos
                 .where((v) => v['categoria'] == categoria)
-                .take(10) // Más videos por fila
+                .take(10)
                 .toList();
 
             if (videosCategoria.isEmpty) return const SizedBox.shrink();
@@ -321,8 +411,7 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
   }
 }
 
-// VideoDetalleModal
-
+// VideoDetalleModal (IDENTICO - funciona perfecto)
 class VideoDetalleModal extends StatefulWidget {
   final Map<String, dynamic> video;
   const VideoDetalleModal({super.key, required this.video});
@@ -342,13 +431,21 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
   }
 
   Future<void> _inicializarReproductor() async {
-    // Reproductor usa video_url (video directo)
     final videoUrl = widget.video['video_url'];
     print('Intentando cargar video: $videoUrl');
+
     if (videoUrl != null && videoUrl.isNotEmpty) {
       try {
         _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+
         await _controller!.initialize();
+
+        _controller!
+          ..setLooping(true)
+          ..setVolume(1.0);
+
+        //..play();
+
         if (mounted) {
           setState(() => _isInitialized = true);
         }
@@ -359,7 +456,6 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
   }
 
   Future<void> _launchTrailer(String? trailerUrl) async {
-    // trailer_url de la tabla contenidoVix
     print('Trailer URL: "$trailerUrl"');
     if (trailerUrl == null || trailerUrl.isEmpty || trailerUrl == 'null') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -387,229 +483,169 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
 
   @override
   Widget build(BuildContext context) {
-    final fechaSubida = widget.video['fecha_subida'] != null
-        ? DateTime.parse(widget.video['fecha_subida']).toLocal()
-        : null;
     final duracion = widget.video['duracion'] ?? 'N/A';
     final edad = widget.video['edad_recomendada'] ?? 'N/A';
-    final videoUrl = widget.video['video_url'];
-    final trailerUrl = widget.video['trailer_url'] ?? '';
+    final trailerUrl = widget.video['trailer_url'];
     final portadaUrl = widget.video['portada_url'] ?? '';
 
-    print('DEBUG - trailer_url: "$trailerUrl"');
-
-    return Container(
-      // FULLSCREEN: 100% altura
-      height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.width,
-      // FONDO con imagen de portada_url
-      decoration: BoxDecoration(
-        image: portadaUrl.isNotEmpty
-            ? DecorationImage(
-                image: NetworkImage(portadaUrl),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black54,
-                  BlendMode.darken,
-                ),
-              )
-            : null,
-        color: portadaUrl.isEmpty ? Colors.black : null,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withOpacity(0.9),
-            ],
-          ),
-        ),
-        child: Column(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
           children: [
-            // REPRODUCTOR DE VIDEO ARRIBA (video_url)
-            Container(
-              height: 280,
-              width: double.infinity,
-              margin: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: _isInitialized && _controller != null
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AspectRatio(
-                            aspectRatio: _controller!.value.aspectRatio,
-                            child: VideoPlayer(_controller!),
-                          ),
-                          IconButton(
-                            iconSize: 72,
-                            icon: Icon(
-                              _controller!.value.isPlaying
-                                  ? Icons.pause_circle_filled
-                                  : Icons.play_circle_filled,
-                              color: Colors.white,
-                              size: 72,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                if (_controller!.value.isPlaying) {
-                                  _controller!.pause();
-                                } else {
-                                  _controller!.play();
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                      )
-                    : const Icon(
-                        Icons.movie_outlined,
-                        color: Colors.white70,
-                        size: 72,
-                      ),
-              ),
-            ),
-
-            // BOTÓN TRAILER (trailer_url → YouTube)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 12,
-                  ),
-                  onPressed: () => _launchTrailer(trailerUrl),
-                  icon: const Icon(Icons.play_arrow, size: 30),
-                  label: const Text(
-                    'VER TRAILER COMPLETO',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                    ),
+            ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // 🖼️ PORTADA
+                Container(
+                  height: 260,
+                  decoration: BoxDecoration(
+                    image: portadaUrl.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(portadaUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                    color: Colors.grey[900],
                   ),
                 ),
-              ),
-            ),
 
-            // INFO COMPLETA (resto igual)
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                child: ListView(
-                  children: [
-                    Text(
-                      widget.video['titulo'] ?? '',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(2, 2),
-                            blurRadius: 6,
-                            color: Colors.black87,
-                          ),
-                        ],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          if (fechaSubida != null)
-                            Text(
-                              '${fechaSubida.day}/${fechaSubida.month}/${fechaSubida.year}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          Text(
-                            '$duracion min • $edad+',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        widget.video['descripcion'] ?? '',
-                        textAlign: TextAlign.justify,
+                // CONTENIDO
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 🎬 TÍTULO
+                      Text(
+                        widget.video['titulo'] ?? '',
                         style: const TextStyle(
                           color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // INFO + TRAILER
+                      Row(
+                        children: [
+                          // ▶ TRAILER PRIMERO
+                          OutlinedButton.icon(
+                            onPressed: () => _launchTrailer(trailerUrl),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Trailer'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          _infoChip(Icons.timer, '$duracion min'),
+                          const SizedBox(width: 8),
+                          _infoChip(Icons.lock, '$edad+'),
+                        ],
+                      ),
+
+                      Text(""),
+                      //  DESCRIPCIÓN
+                      Text(
+                        widget.video['descripcion'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.white70,
                           fontSize: 16,
                           height: 1.6,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(1, 1),
-                              blurRadius: 2,
-                              color: Colors.black54,
-                            ),
-                          ],
                         ),
+                        textAlign: TextAlign.justify,
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
+
+                      const SizedBox(height: 32),
+
+                      // 🎥 VIDEO ABAJO
+                      // 🎥 VIDEO ABAJO
+                      if (_isInitialized && _controller != null)
+                        AspectRatio(
+                          aspectRatio: _controller!.value.aspectRatio,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                VideoPlayer(_controller!),
+
+                                // ▶️ BOTÓN PLAY / PAUSE
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _controller!.value.isPlaying
+                                          ? _controller!.pause()
+                                          : _controller!.play();
+                                    });
+                                  },
+                                  child: AnimatedOpacity(
+                                    opacity: _controller!.value.isPlaying
+                                        ? 0.0
+                                        : 1.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        _controller!.value.isPlaying
+                                            ? Icons.pause
+                                            : Icons.play_arrow,
+                                        color: Colors.white,
+                                        size: 38,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          height: 200,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
                             borderRadius: BorderRadius.circular(16),
                           ),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, size: 28),
-                        label: const Text(
-                          'CERRAR',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          child: const Icon(
+                            Icons.movie_outlined,
+                            color: Colors.white70,
+                            size: 60,
                           ),
                         ),
-                      ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            //  BOTÓN CERRAR ARRIBA IZQUIERDA
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 50,
+              left: 16,
+              child: CircleAvatar(
+                backgroundColor: Colors.red,
+                radius: 22,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
@@ -618,4 +654,21 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
       ),
     );
   }
+}
+
+Widget _infoChip(IconData icon, String text) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white10,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 16),
+        const SizedBox(width: 6),
+        Text(text, style: const TextStyle(color: Colors.white70)),
+      ],
+    ),
+  );
 }

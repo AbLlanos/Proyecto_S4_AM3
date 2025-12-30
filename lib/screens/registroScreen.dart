@@ -400,6 +400,7 @@ Future<void> guardarUsuarioEnSupabase(
     'telefono': telefono,
     'pais': pais,
     'fechaNacimiento': fechaNacimiento,
+    'rol':'usuario',
   });
 }
 

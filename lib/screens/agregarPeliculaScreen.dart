@@ -22,10 +22,11 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
   final TextEditingController descripcion = TextEditingController();
   final TextEditingController duracion = TextEditingController();
   final TextEditingController edadRecomendada = TextEditingController();
+  final TextEditingController trailerUrl = TextEditingController();
 
-  String? _categoriaSeleccionada = 'Educativo';
+  String? _categoriaSeleccionada = 'Tendencia';
 
-  bool _esPublica = true; // pública/privada
+  bool _esPublica = true;
   static const double maxVideoSizeBytes = 5 * 1024 * 1024; // 5 MB
   static const double maxImageSizeBytes = 1 * 1024 * 1024; // 1 MB
 
@@ -119,6 +120,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     print(
       'Portada bytes: ${_portadaBytes != null ? "${(_portadaBytes!.lengthInBytes / 1024 / 1024).toStringAsFixed(2)} MB" : "NULL"}',
     );
+    print('Trailer URL: "${trailerUrl.text.trim()}"'); // DEBUG
 
     if (_videoBytes == null) {
       print('ERROR: No hay video seleccionado');
@@ -159,15 +161,15 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     if (titulo.text.trim().isEmpty ||
         descripcion.text.trim().isEmpty ||
         duracion.text.trim().isEmpty ||
-        edadRecomendada.text.trim().isEmpty) {
-      print('ERROR: Título o descripción vacíos');
-      print('Título: "${titulo.text.trim()}"');
-      print('Descripción: "${descripcion.text.trim()}"');
+        edadRecomendada.text.trim().isEmpty ||
+        trailerUrl.text.trim().isEmpty) {
+      print('ERROR: Campos vacíos');
+      print('Trailer URL: "${trailerUrl.text.trim()}"');
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Datos incompletos'),
-          content: Text('Debe completar toda la información solicitada.'),
+          content: Text('Debe completar todos los campos'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -227,17 +229,18 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
         'edad_recomendada': edadRecomendada.text.trim(),
         'fecha_subida': ahora.toIso8601String(),
         'video_url': videoUrl,
+        'trailer_url': trailerUrl.text.trim(),
         'es_publica': _esPublica,
         'categoria': _categoriaSeleccionada,
       });
-      print('INSERT en BD exitoso');
+      print('INSERT en BD exitoso CON trailer_url');
 
       print('TODO EXITOSO - Mostrando diálogo de éxito');
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Éxito'),
-          content: Text('Video agregado correctamente'),
+          content: Text('Película agregada correctamente'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -272,7 +275,6 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     print('FIN DE guardarPelicula()');
   }
 
-  //Cuerpo del formulario
   @override
   Widget build(BuildContext context) {
     const Color fieldColor = Color.fromARGB(197, 116, 116, 116);
@@ -281,13 +283,12 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Agregar video nuevo',
+          'Agregar nueva película',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
         ),
         backgroundColor: const Color.fromARGB(255, 110, 31, 93),
         elevation: 0,
       ),
-
       body: SingleChildScrollView(
         child: Container(
           decoration: const BoxDecoration(
@@ -306,7 +307,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
               children: [
                 const Center(
                   child: Text(
-                    "Agregar video",
+                    "Agregar película",
                     style: TextStyle(
                       fontSize: 25,
                       fontWeight: FontWeight.bold,
@@ -327,7 +328,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Label
+                // Label Portada
                 const Text(
                   'Selecciona una imagen para la portada (JPG/PNG, máx 1 MB)',
                   style: TextStyle(
@@ -339,7 +340,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Seleccionar PORTADA (imagen) - ocupa todo el ancho
+                // Seleccionar PORTADA
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -348,7 +349,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                     label: Text(
                       _portadaBytes == null
                           ? 'Seleccionar portada (<= 1 MB)'
-                          : 'Portada seleccionada ✓',
+                          : 'Portada seleccionada',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -370,13 +371,50 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
 
                 const SizedBox(height: 16),
 
+                // TRAILER URL
+                const Text(
+                  'Enlace del trailer (YouTube)',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: trailerUrl,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.link, color: Colors.white70),
+                    suffixIcon: trailerUrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
+                            onPressed: () {
+                              trailerUrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    border: const OutlineInputBorder(),
+                    labelText: "Url del trailer",
+                    labelStyle: TextStyle(color: labelColor),
+                    filled: true,
+                    fillColor: fieldColor,
+                    hintText: "Pega aquí el enlace completo de YouTube",
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Título
                 TextField(
                   controller: titulo,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.movie, color: Colors.white70),
                     border: OutlineInputBorder(),
-                    labelText: "Título del video",
+                    labelText: "Título",
                     labelStyle: TextStyle(color: labelColor),
                     filled: true,
                     fillColor: fieldColor,
@@ -469,7 +507,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Categoría
+                /* Categoría
                 Row(
                   children: [
                     const Text(
@@ -512,8 +550,50 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
+                */
+                Row(
+                  children: [
+                    const Text(
+                      'Categoría:',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    DropdownButton<String>(
+                      value: _categoriaSeleccionada,
+                      dropdownColor: Colors.black87,
+                      style: const TextStyle(color: Colors.white),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Tendencia',
+                          child: Text('Tendencia'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Acción',
+                          child: Text('Acción'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Miedo', 
+                          child: Text('Miedo')),
+                        DropdownMenuItem(
+                          value: 'Aventura',
+                          child: Text('Aventura'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Clásica',
+                          child: Text('Clásica'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _categoriaSeleccionada = val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
 
-                // Label explicativo para VIDEO
+                // Label VIDEO
                 const Text(
                   'Selecciona el video (MP4, máx 5 MB)',
                   style: TextStyle(
@@ -525,7 +605,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Seleccionar VIDEO - ocupa todo el ancho
+                // Seleccionar VIDEO
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -534,7 +614,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                     label: Text(
                       _videoBytes == null
                           ? 'Seleccionar video (<= 5 MB)'
-                          : 'Video seleccionado ✓',
+                          : 'Video seleccionado',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

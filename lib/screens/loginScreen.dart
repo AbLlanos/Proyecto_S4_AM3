@@ -36,7 +36,7 @@ class Cuerpo extends StatelessWidget {
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: NetworkImage(
-                'https://i.postimg.cc/LsXq5Nsw-/IMG-20240104-120318.jpg',
+                'https://wallpapers.com/images/hd/astronaut-aesthetic-in-black-space-dpybjk5j0abh0jmh.jpg',
               ),
               fit: BoxFit.cover,
             ),
@@ -84,7 +84,7 @@ Widget formularioRegistro(context) {
     children: [
       const Center(
         child: Text(
-          "VixVideo",
+          "VixScienceMov",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,

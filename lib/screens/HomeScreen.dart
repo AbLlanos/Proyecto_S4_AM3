@@ -48,7 +48,7 @@ class _homeScreenState extends State<homeScreen> {
               color: Colors.purple[100],
               child: Center(
                 child: Text(
-                  "VixVideo",
+                  "VixScienceMov",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -66,14 +66,14 @@ class _homeScreenState extends State<homeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.library_add, color: Colors.purple),
-              title: const Text("Catálogo o descubrir"),
+              title: const Text("Revisar cátalogo"),
               onTap: () {
                 Navigator.pushNamed(context, '/catalogo');
               },
             ),
             ListTile(
               leading: const Icon(Icons.video_library, color: Colors.purple),
-              title: const Text("Agregar Video"),
+              title: const Text("Agregar película"),
               onTap: () {
                 Navigator.pushNamed(context, '/agregarPelicula');
               },
@@ -150,7 +150,7 @@ class _homeScreenState extends State<homeScreen> {
                 children: [
                   const Center(
                     child: Text(
-                      "VixVideo",
+                      "VixScienceMov",
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -255,7 +255,7 @@ class _homeScreenState extends State<homeScreen> {
                           Navigator.pushNamed(context, '/catalogo'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
-                        'Descubre nuevos videos',
+                        'Revisar catálogo',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -272,7 +272,7 @@ class _homeScreenState extends State<homeScreen> {
                           Navigator.pushNamed(context, '/agregarPelicula'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
-                        'Agregar nuevos videos',
+                        'Agregar nuevas películas',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(

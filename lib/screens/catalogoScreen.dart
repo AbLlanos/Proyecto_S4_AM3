@@ -171,17 +171,14 @@ class _catalogoScreenState extends State<catalogoScreen>
                 style: const TextStyle(color: Colors.white),
                 items: const [
                   DropdownMenuItem(value: 'todos', child: Text('Todos')),
-                  DropdownMenuItem(
-                    value: 'Educativo',
-                    child: Text('Educativo'),
-                  ),
-                  DropdownMenuItem(value: 'Gameplay', child: Text('Gameplay')),
-                  DropdownMenuItem(value: 'Tutorial', child: Text('Tutorial')),
-                  DropdownMenuItem(
-                    value: 'Entretenimiento',
-                    child: Text('Entretenimiento'),
-                  ),
+                  DropdownMenuItem(value: 'Tendencia', child: Text('Tendencia')),
                   DropdownMenuItem(value: 'Acción', child: Text('Acción')),
+                  DropdownMenuItem(
+                    value: 'Miedo',
+                    child: Text('Miedo'),
+                  ),
+                  DropdownMenuItem(value: 'Aventura', child: Text('Aventura')),
+                  DropdownMenuItem(value: 'Clásica', child: Text('Clásica')),
                 ],
                 onChanged: (val) => setState(() => _filtroCategoria = val!),
               ),
@@ -200,8 +197,8 @@ class _catalogoScreenState extends State<catalogoScreen>
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.amber,
           tabs: const [
-            Tab(text: 'Descubrir'),
-            Tab(text: 'Mis Videos'),
+            Tab(text: 'Catálogo disponible'),
+            Tab(text: 'Películas subidas'),
           ],
         ),
       ),

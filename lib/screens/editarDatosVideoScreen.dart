@@ -21,6 +21,8 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
   final TextEditingController descripcion = TextEditingController();
   final TextEditingController duracion = TextEditingController();
   final TextEditingController edadRecomendada = TextEditingController();
+  final TextEditingController trailerUrl = TextEditingController();
+  String _categoriaSeleccionada = 'Tendencia';
 
   bool _esPublica = true;
   static const double maxImageSizeBytes = 1 * 1024 * 1024;
@@ -28,7 +30,6 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
   @override
   void initState() {
     super.initState();
-    // ← OBTENER DATOS de pushNamed arguments
     WidgetsBinding.instance.addPostFrameCallback((_) {
       videoData =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -42,17 +43,20 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
         print('  descripcion: ${videoData!['descripcion']}');
         print('  duracion: ${videoData!['duracion']}');
         print('  edad_recomendada: ${videoData!['edad_recomendada']}');
+        print('  trailer_url: ${videoData!['trailer_url']}');
         print('  es_publica: ${videoData!['es_publica']}');
 
         titulo.text = videoData!['titulo'] ?? '';
         descripcion.text = videoData!['descripcion'] ?? '';
         duracion.text = videoData!['duracion']?.toString() ?? '';
         edadRecomendada.text = videoData!['edad_recomendada']?.toString() ?? '';
+        trailerUrl.text = videoData!['trailer_url'] ?? '';
         _esPublica =
             videoData!['es_publica'] == true ||
             videoData!['es_publica'] == 'true';
+        _categoriaSeleccionada = videoData!['categoria'] ?? 'Acción';
 
-        print('DATOS CARGADOS CORRECTAMENTE');
+        print('DATOS CARGADOS CORRECTAMENTE (incluyendo trailer_url)');
         setState(() {});
       } else {
         print('ERROR: videoData es NULL');
@@ -102,13 +106,17 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
       return;
     }
 
-    if (titulo.text.trim().isEmpty || descripcion.text.trim().isEmpty) {
+    if (titulo.text.trim().isEmpty ||
+        descripcion.text.trim().isEmpty ||
+        trailerUrl.text.trim().isEmpty) {
       if (mounted) {
         showDialog(
           context: context,
-          builder: (context) => const AlertDialog(
-            title: Text('Datos incompletos'),
-            content: Text('Completa título y descripción.'),
+          builder: (context) => AlertDialog(
+            title: const Text('Datos incompletos'),
+            content: const Text(
+              'Completa **todos** los campos, incluyendo el enlace del trailer.',
+            ),
           ),
         );
       }
@@ -144,7 +152,9 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
         'descripcion': descripcion.text.trim(),
         'duracion': duracion.text.trim(),
         'edad_recomendada': edadRecomendada.text.trim(),
+        'trailer_url': trailerUrl.text.trim(),
         'es_publica': _esPublica,
+        'categoria': _categoriaSeleccionada,
       };
 
       if (_portadaBytes != null) {
@@ -161,7 +171,8 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
         updateData['portada_url'] = bucket.getPublicUrl(portadaPath);
       }
 
-      print('💾 Actualizando ID: ${videoData!['id']}');
+      print('Actualizando ID: ${videoData!['id']}');
+      print('Nuevo trailer_url: "${trailerUrl.text.trim()}"');
       await supabase
           .from('contenidoVix')
           .update(updateData)
@@ -207,7 +218,6 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -276,7 +286,7 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     label: Text(
                       _portadaBytes == null
                           ? 'Cambiar portada'
-                          : 'Nueva portada ',
+                          : 'Nueva portada ✓',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -287,6 +297,43 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // NUEVO CAMPO: TRAILER URL
+                const Text(
+                  'Enlace del trailer (YouTube)',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: trailerUrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.link, color: Colors.white70),
+                    suffixIcon: trailerUrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
+                            onPressed: () {
+                              trailerUrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    border: const OutlineInputBorder(),
+                    labelText: "https://youtube.com/watch?v=...",
+                    labelStyle: TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: const Color.fromARGB(197, 116, 116, 116),
+                    hintText: "Pega aquí el enlace completo de YouTube",
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -308,7 +355,6 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                 // Descripción
                 TextField(
                   controller: descripcion,
-                  maxLines: 3,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     labelText: "Descripción",
@@ -348,7 +394,7 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     fillColor: Color.fromARGB(197, 116, 116, 116),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Visibilidad
                 Row(
@@ -370,7 +416,49 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 5),
+                // Categoría
+                Row(
+                  children: [
+                    const Text(
+                      'Categoria:',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    DropdownButton<String>(
+                      value: _categoriaSeleccionada,
+                      dropdownColor: Colors.grey[800],
+                      style: const TextStyle(color: Colors.white),
+                        items: const [
+                        DropdownMenuItem(
+                          value: 'Tendencia',
+                          child: Text('Tendencia'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Acción',
+                          child: Text('Acción'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Miedo', 
+                          child: Text('Miedo')),
+                        DropdownMenuItem(
+                          value: 'Aventura',
+                          child: Text('Aventura'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Clásica',
+                          child: Text('Clásica'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _categoriaSeleccionada = val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                                const SizedBox(height: 5),
 
                 SizedBox(
                   width: double.infinity,
