@@ -513,7 +513,7 @@ class VideoCard extends StatelessWidget {
   }
 }
 
-// ✅ VideoDetalleModal CON BOTÓN DROPBOX ABAJO DE DESCRIPCIÓN (REEMPLAZADO)
+//  VideoDetalleModal CON BOTÓN DROPBOX ABAJO DE DESCRIPCIÓN (REEMPLAZADO)
 class VideoDetalleModal extends StatefulWidget {
   final Map<String, dynamic> video;
   const VideoDetalleModal({super.key, required this.video});
@@ -552,7 +552,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     }
   }
 
-  // ✅ BOTÓN VER PELÍCULA COMPLETA EN DROPBOX (raw=1)
+  // BOTÓN VER PELÍCULA COMPLETA EN DROPBOX (raw=1)
   Future<void> _launchVideoCompleto(String? videoUrl) async {
     print('Video completo URL: "$videoUrl"');
     if (videoUrl == null || videoUrl.isEmpty || videoUrl == 'null') {
@@ -682,7 +682,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                         textAlign: TextAlign.justify,
                       ),
                       const SizedBox(height: 24),
-                      // ✅ BOTÓN VER PELÍCULA COMPLETA (DROPBOX)
+                      // BOTÓN VER PELÍCULA COMPLETA (DROPBOX)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -702,7 +702,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // 🎥 PREVIEW VIDEO (mini)
+                      // PREVIEW VIDEO (mini)
                       if (_isInitialized && _controller != null)
                         AspectRatio(
                           aspectRatio: _controller!.value.aspectRatio,

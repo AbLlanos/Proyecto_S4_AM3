@@ -192,21 +192,13 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
               children: [
                 const Text(
                   "Editar datos de la película",
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Portada: cualquier URL | Video: Dropbox (dl=0 → raw=1)",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                ),   
                 const SizedBox(height: 24),
 
                 // PORTADA URL

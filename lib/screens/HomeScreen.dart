@@ -136,12 +136,11 @@ class _homeScreenState extends State<homeScreen> {
             child: Container(color: const Color.fromARGB(122, 0, 0, 0)),
           ),
 
-          Center(
+          SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+                
                 children: [
                   const Center(
                     child: Text(
@@ -166,7 +165,7 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // CONTAINER PRINCIPAL CON FOTO ✅
+                  // CONTAINER PRINCIPAL CON FOTO 
                   Container(
                     constraints: const BoxConstraints(maxWidth: 350),
                     padding: const EdgeInsets.all(32),
@@ -183,7 +182,7 @@ class _homeScreenState extends State<homeScreen> {
                     ),
                     child: Column(
                       children: [
-                        // 🖼️ FOTO DE PERFIL NUEVA ✅
+                        // FOTO DE PERFIL NUEVA 
                         Container(
                           width: 100,
                           height: 100,
