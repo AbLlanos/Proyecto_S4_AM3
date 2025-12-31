@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle; // Para canLaunchUrl
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/editarDatosVideoScreen.dart'
     hide supabase;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
-import 'package:url_launcher/url_launcher.dart'; // ← AGREGADO para launchUrl
+import 'package:url_launcher/url_launcher.dart';
 
 class catalogoScreen extends StatefulWidget {
   const catalogoScreen({super.key});
@@ -443,7 +443,7 @@ class VideoCard extends StatelessWidget {
 
     Navigator.pushNamed(context, '/editarVideo', arguments: video);
 
-    print('🚀 _editarVideo: Navigator.pushNamed ejecutado');
+    print('_editarVideo: Navigator.pushNamed ejecutado');
   }
 
   Future<void> _eliminarVideo(
@@ -609,7 +609,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     final duracion = widget.video['duracion'] ?? 'N/A';
     final edad = widget.video['edad_recomendada'] ?? 'N/A';
     final trailerUrl = widget.video['trailer_url'];
-    final videoCompletoUrl = widget.video['video_url']; // ← VIDEO COMPLETO
+    final videoCompletoUrl = widget.video['video_url'];
     final portadaUrl = widget.video['portada_url'] ?? '';
 
     return Scaffold(

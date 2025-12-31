@@ -102,7 +102,7 @@ Widget formularioRegistro(
   BuildContext context,
   Future<void> Function() pickPerfil,
   Uint8List? perfilBytes,
-  String? perfilExt, // ← CAMBIADO: nullable
+  String? perfilExt,
 ) {
   TextEditingController nombre = TextEditingController();
   TextEditingController correo = TextEditingController();
@@ -164,7 +164,7 @@ Widget formularioRegistro(
         ),
         const SizedBox(height: 16),
 
-        // CAMPOS DE TEXTO (iguales)
+        // CAMPOS DE TEXTO
         TextField(
           controller: nombre,
           decoration: InputDecoration(
@@ -260,7 +260,7 @@ Widget formularioRegistro(
               contrasenia,
               context,
               perfilBytes,
-              perfilExt, // ← SIN ! porque puede ser null
+              perfilExt,
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 110, 31, 93),
@@ -376,11 +376,11 @@ Future<void> registroVixUsuarioSupabase(
     // SUBIR IMAGEN (SOLO SI AMBOS EXISTEN)
     String? perfilUrl;
     if (perfilBytes != null && perfilExt != null) {
-      print('🖼️ Subiendo imagen ${perfilBytes.lengthInBytes} bytes');
+      print('Subiendo imagen ${perfilBytes.lengthInBytes} bytes');
       perfilUrl = await _subirImagenPerfil(user.id, perfilBytes, perfilExt);
       print(' URL: $perfilUrl');
     } else {
-      print('ℹ️ Sin imagen de perfil');
+      print('Sin imagen de perfil');
     }
 
     await guardarUsuarioEnSupabase(
@@ -463,7 +463,7 @@ Future<String?> _subirImagenPerfil(String userId, Uint8List imageBytes, String e
     final bucket = supabase.storage.from('vixDocumentaryRepository');
     final path = 'usuarios/$userId/perfil.$ext';
     
-    print('📤 Subiendo a: $path');
+    print('Subiendo a: $path');
     
     await bucket.uploadBinary(
       path,
@@ -475,7 +475,7 @@ Future<String?> _subirImagenPerfil(String userId, Uint8List imageBytes, String e
     print(' Subida exitosa: $url');
     return url;
   } catch (e) {
-    print('💥 Error subiendo imagen: $e');
+    print('Error subiendo imagen: $e');
     return null;
   }
 }
