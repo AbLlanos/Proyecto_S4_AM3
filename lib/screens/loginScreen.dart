@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:proyecto_s4_am3/main.dart';
 import 'package:proyecto_s4_am3/screens/catalogoScreen.dart';
-import 'package:proyecto_s4_am3/screens/registroScreen.dart';
+import 'package:proyecto_s4_am3/screens/registroScreen.dart' hide supabase;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class loginScreen extends StatelessWidget {
   const loginScreen({super.key});
@@ -34,7 +36,7 @@ class Cuerpo extends StatelessWidget {
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: NetworkImage(
-                'https://i.postimg.cc/LsXq5Nsw-/IMG-20240104-120318.jpg',
+                'https://wallpapers.com/images/hd/astronaut-aesthetic-in-black-space-dpybjk5j0abh0jmh.jpg',
               ),
               fit: BoxFit.cover,
             ),
@@ -82,7 +84,7 @@ Widget formularioRegistro(context) {
     children: [
       const Center(
         child: Text(
-          "VixDocumentary",
+          "VixScienceMov",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -134,8 +136,11 @@ Widget formularioRegistro(context) {
       SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: () =>
-              loginVixUsuario(correoUsuario, contraseniaUsuario, context),
+          onPressed: () => loginVixUsuarioSupabase(
+            correoUsuario,
+            contraseniaUsuario,
+            context,
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 110, 31, 93),
           ),
@@ -170,14 +175,14 @@ Widget formularioRegistro(context) {
   );
 }
 
-Future<void> loginVixUsuario(correo, contrasenia, context) async {
+Future<void> loginVixUsuarioSupabase(correo, contrasenia, context) async {
   if (correo.text.isEmpty || contrasenia.text.isEmpty) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
-          title: const Text('Error de Login'),
-          content: const Text('Por favor complete todos los campos'),
+          title: Text('Error de Login'),
+          content: Text('Por favor complete todos los campos'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -191,37 +196,49 @@ Future<void> loginVixUsuario(correo, contrasenia, context) async {
   }
 
   try {
-    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+    // 1. Iniciar sesión en Supabase Auth
+    final AuthResponse res = await supabase.auth.signInWithPassword(
       email: correo.text.trim(),
       password: contrasenia.text.trim(),
     );
 
-    // CARGAR DATOS DEL USUARIO y navegar
+    final user = res.user;
+    if (user == null) {
+      throw Exception('No se pudo iniciar sesión');
+    }
+
+    // 2. OBTENER ROL DEL USUARIO
+    final userData = await supabase
+        .from('usuariosVix')
+        .select('rol')
+        .eq('id', user.id)
+        .single();
+
+    final rol = userData['rol'] as String;
+
+    // 3. REDIRIGIR SEGÚN ROL
+    String rutaDestino = rol == 'administrador' ? '/home' : '/catalogoUsuario';
+
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/home',
+      rutaDestino,
       (route) => false,
-      arguments: credential.user!.uid,
+      arguments: {'userId': user.id, 'rol': rol},
     );
+  } on AuthException catch (e) {
+    final msg = e.message.toLowerCase();
+    String mensaje;
 
-    //Alertas de errores de login
-  } on FirebaseAuthException catch (e) {
-    String mensaje = 'Error desconocido';
-    switch (e.code) {
-      case 'user-not-found':
-        mensaje = 'No existe cuenta con este correo.';
-        break;
-      case 'wrong-password':
-        mensaje = 'Contraseña incorrecta.';
-        break;
-      case 'invalid-email':
-        mensaje = 'Correo electrónico inválido.';
-        break;
-      case 'too-many-requests':
-        mensaje = 'Demasiados intentos. Intente más tarde.';
-        break;
-      default:
-        mensaje = e.message ?? 'Error: ${e.code}';
+    if (msg.contains('invalid login credentials')) {
+      mensaje = 'Credenciales incorrectas.';
+    } else if (msg.contains('email') && msg.contains('invalid')) {
+      mensaje = 'Correo electrónico inválido.';
+    } else if (msg.contains('email not confirmed')) {
+      mensaje = 'Debe confirmar su correo electrónico antes de continuar.';
+    } else if (msg.contains('rate limit')) {
+      mensaje = 'Demasiados intentos. Intente nuevamente más tarde.';
+    } else {
+      mensaje = e.message;
     }
 
     showDialog(

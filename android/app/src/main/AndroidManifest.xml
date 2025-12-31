@@ -1,9 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- PERMISOS INTERNET (OBLIGATORIO para video_player) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- VIDEO PLAYER PERMISSIONS -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="proyecto_s4_am3"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- DESACTIVAR IMPELLER EN ANDROID -->
         <meta-data
@@ -43,7 +50,7 @@
         </intent>
     </queries>
 
-    <!-- NUEVO: permitir abrir https (YouTube, etc.) -->
+    <!-- Abrir HTTPS (YouTube, videos) -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
