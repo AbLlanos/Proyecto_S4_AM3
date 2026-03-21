@@ -193,7 +193,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: const TrendImage(
                                 index: 1,
                                 url:
-                                    'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABfORJGAy9lFPC7YKGR1XLmX50b9BNRgsKrsLHE1nZdWcYHaba8RURaC3S8vRYpgaPnAV9vIjI8xzuAhhwg4qjwinwU5qoZqIkR0.jpg?r=890',
+                                    'https://m.media-amazon.com/images/M/MV5BMjEwMzMxODIzOV5BMl5BanBnXkFtZTgwNzg3OTAzMDI@._V1_.jpg',
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -203,7 +203,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: const TrendImage(
                                 index: 2,
                                 url:
-                                    'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABfjOaHOS18IrQN3YbT52YmkuGx0VZUmiJYRT7mZA-MYoQEN8U7Bcq-KEcPC9E9VZt00y6zoiAJ69G9zwIX5WliwE3-TE9qdkm-g.jpg?r=6d5',
+                                    'https://m.media-amazon.com/images/M/MV5BZmM3ZjE0NzctNjBiOC00MDZmLTgzMTUtNGVlOWFlOTNiZDJiXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -213,7 +213,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: const TrendImage(
                                 index: 3,
                                 url:
-                                    'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABRSSnW8MlbjYqQrNp2jS0VEKom5SWGW1sa96Zc8RpHzFaSrTZZ5WV_ExuxFPW94wwIPn9cwxkq0mXBL2U7Cv-Wiwevti3OvHPVE.jpg?r=fd2',
+                                    'https://lumiere-a.akamaihd.net/v1/images/poster-avatar-2-lat_46034440_1_c359a2d2.png',
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -223,7 +223,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: const TrendImage(
                                 index: 4,
                                 url:
-                                    'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABQUzlnPyt9wOXquyWW3G3ZXjBi4Oihof0lhlv8TtHN4mE6t8vDCd1T1lk8MxURwdYyfeCcl2CcIDCruTvOPbJdxV8y1eRbFnuw1cY.jpg?r=f93',
+                                    'https://play-lh.googleusercontent.com/bsXfJQN4WNagbPiNclU-gLZZVFpOaRih7VJuse6F5cNiQpH778sLOMEYwbeDMdyOG8dj',
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -233,7 +233,7 @@ class WelcomeScreen extends StatelessWidget {
                               child: const TrendImage(
                                 index: 5,
                                 url:
-                                    'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABetUJ9QNi10AAp_pEyZ6PVJ2II7TZA9w1ZQGNftL1V383nmvVmEKTVvh8a17akqxT-7HodJ6iQr1W20KhffN7Q_ZWiSK9PF4IFc.jpg?r=479',
+                                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTI-oweaXkYJRVA4OfXYcaYnzrLwPxXibFFIw&s',
                               ),
                             ),
                           ],
@@ -291,32 +291,32 @@ class WelcomeScreen extends StatelessWidget {
                           onTap: () => Navigator.pushNamed(context, '/login'),
                           child: const RecoImage(
                             url:
-                                'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABYg1gztA49i15Ed0w2uWX8ecLG4Ojih_OeMZ5V-kOXVEz16kywp9CqcaJxMa63faFdxyttChnheIxy3I37Dj7iSK2wwocB0sUjE.jpg?r=039',
-                            titulo: 'El caso Watts: El padre homicida',
+                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNrNiGixbF-X4j5ntDHc0E1ZY3l0Zd4k-cMw&s',
+                            titulo: 'Star Wars: Episode V - The Empire Strikes Back ',
                           ),
                         ),
                         GestureDetector(
                           onTap: () => Navigator.pushNamed(context, '/login'),
                           child: const RecoImage(
                             url:
-                                'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABe__2wFZ0vkus5CLSPgAcz5iys8h1gweSD-PPBp171Fzc-2umLX06jSvmKtmQE3eBfQjBBZh3ZLJULzS2t7i30ZdDoePEvmYvnE.jpg?r=e4c',
-                            titulo: 'Una vida suprema',
+                                'https://upload.wikimedia.org/wikipedia/en/thumb/c/cb/Alien_Romulus_2024_%28poster%29.jpg/250px-Alien_Romulus_2024_%28poster%29.jpg',
+                            titulo: 'Alien: Romulus',
                           ),
                         ),
                         GestureDetector(
                           onTap: () => Navigator.pushNamed(context, '/login'),
                           child: const RecoImage(
                             url:
-                                'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABbHOB86urT2CZq-2jD_LkCFEdtIziOtDsXoHKFx5QLUVl1o79s3IIcAwU6r9tuJwDg8kcLB5DXUrZkpZOdXAz0jftECrNySElu4.jpg?r=bd2',
-                            titulo: 'Colin en blanco y negro',
+                                'https://m.media-amazon.com/images/M/MV5BMjA1Nzk0OTM2OF5BMl5BanBnXkFtZTgwNjU2NjEwMDE@._V1_FMjpg_UX1000_.jpg',
+                            titulo: 'Her',
                           ),
                         ),
                         GestureDetector(
                           onTap: () => Navigator.pushNamed(context, '/login'),
                           child: const RecoImage(
                             url:
-                                'https://occ-0-7309-1380.1.nflxso.net/dnm/api/v6/Qs00mKCpRvrkl3HZAN5KwEL1kpE/AAAABVclh_x7Nbe5YO-vwQn2A6Hf4CC55pNX6S7UtC4nW62DrRqtbTsW2Q35zkRVfSAiEyp6QAOWGL56Z4dTyO4OiHvHz1gGnFHPiCA.jpg?r=abc',
-                            titulo: 'La gran noche del pop',
+                                'https://es.web.img3.acsta.net/pictures/17/10/03/08/45/4260918.jpg',
+                            titulo: 'Blade Runner 2049',
                           ),
                         ),
                       ],

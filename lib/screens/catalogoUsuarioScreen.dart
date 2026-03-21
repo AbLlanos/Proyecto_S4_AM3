@@ -272,7 +272,6 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
                 _cargarDatosUsuario();
               },
             ),
-            const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text("Cerrar Sesión"),
