@@ -389,97 +389,106 @@ class _catalogoUsuarioScreenState extends State<catalogoUsuarioScreen> {
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
-          children: categories.map((categoria) {
-            final videosCategoria = filteredVideos
-                .where((v) => v['categoria'] == categoria)
-                .take(10)
-                .toList();
+          children: [
+            ...categories.map((categoria) {
+              final videosCategoria = filteredVideos
+                  .where((v) => v['categoria'] == categoria)
+                  .take(10)
+                  .toList();
 
-            if (videosCategoria.isEmpty) return const SizedBox.shrink();
+              if (videosCategoria.isEmpty) return const SizedBox.shrink();
 
-            return Container(
-              color: const Color(0xFF1A1A1A),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.category, color: Colors.amber[400], size: 28),
-                      const SizedBox(width: 8),
-                      Text(
-                        categoria,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+              return Container(
+                color: const Color(0xFF1A1A1A),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.category,
+                          color: Colors.amber[400],
+                          size: 28,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 280,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: videosCategoria.map((video) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: GestureDetector(
-                              onTap: () => _mostrarDetalle(context, video),
-                              child: Container(
-                                width: 160,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: DecorationImage(
-                                    image: NetworkImage(
-                                      video['portada_url'] ?? '',
-                                    ),
-                                    fit: BoxFit.cover,
-                                    onError: (exception, stackTrace) => null,
-                                  ),
-                                ),
+                        const SizedBox(width: 8),
+                        Text(
+                          categoria,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 280,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: videosCategoria.map((video) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: GestureDetector(
+                                onTap: () => _mostrarDetalle(context, video),
                                 child: Container(
+                                  width: 160,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                      colors: [
-                                        Colors.black54,
-                                        Colors.transparent,
-                                      ],
+                                    image: DecorationImage(
+                                      image: NetworkImage(
+                                        video['portada_url'] ?? '',
+                                      ),
+                                      fit: BoxFit.cover,
+                                      onError: (exception, stackTrace) => null,
                                     ),
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Align(
-                                      alignment: Alignment.bottomLeft,
-                                      child: Text(
-                                        video['titulo'] ?? '',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          Colors.black54,
+                                          Colors.transparent,
+                                        ],
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Align(
+                                        alignment: Alignment.bottomLeft,
+                                        child: Text(
+                                          video['titulo'] ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+                  ],
+                ),
+              );
+            }),
+
+            // ✅ SizedBox al final de TODAS las categorías
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
         ),
       ),
     );
@@ -521,6 +530,8 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
 
   Future<void> _inicializarReproductor() async {
     final videoUrl = widget.video['video_url'];
+    print('Intentando cargar video: $videoUrl');
+
     if (videoUrl != null && videoUrl.isNotEmpty) {
       try {
         _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
@@ -531,9 +542,12 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
         _controller!.addListener(() {
           if (mounted) setState(() {});
         });
-        if (mounted) setState(() => _isInitialized = true);
+        if (mounted) {
+          setState(() => _isInitialized = true);
+        }
       } catch (e) {
         print('Error inicializando video: $e');
+        if (mounted) setState(() => _isInitialized = false);
       }
     }
   }
@@ -676,16 +690,18 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
         child: GestureDetector(
           onTap: _onTapVideo,
           child: Stack(
-            alignment: Alignment.center,
             children: [
-              // ── Video ──
-              VideoPlayer(_controller!),
+              // ← sin alignment aquí
+              // ── Video (ocupa todo) ──
+              Positioned.fill(child: VideoPlayer(_controller!)),
 
-              // ── Overlay oscuro cuando se muestran controles ──
-              AnimatedOpacity(
-                opacity: _showControls ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(color: Colors.black45),
+              // ── Overlay oscuro ──
+              Positioned.fill(
+                child: AnimatedOpacity(
+                  opacity: _showControls ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(color: const Color.fromARGB(17, 0, 0, 0)),
+                ),
               ),
 
               // ── Controles centrales ──
@@ -694,118 +710,116 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                 duration: const Duration(milliseconds: 300),
                 child: IgnorePointer(
                   ignoring: !_showControls,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Retroceder 10s
-                      _controlBtn(
-                        icon: Icons.replay_10,
-                        size: 36,
-                        onTap: _seekBackward,
-                      ),
-                      const SizedBox(width: 24),
-                      // Play / Pause
-                      GestureDetector(
-                        onTap: _togglePlayPause,
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: Colors.white,
-                            size: 38,
+                  child: Center(
+                    // ← Center en vez de Row directo
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _controlBtn(
+                          icon: Icons.replay_10,
+                          size: 36,
+                          onTap: _seekBackward,
+                        ),
+                        const SizedBox(width: 24),
+                        GestureDetector(
+                          onTap: _togglePlayPause,
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isPlaying ? Icons.pause : Icons.play_arrow,
+                              color: Colors.white,
+                              size: 38,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 24),
-                      // Adelantar 10s
-                      _controlBtn(
-                        icon: Icons.forward_10,
-                        size: 36,
-                        onTap: _seekForward,
-                      ),
-                    ],
+                        const SizedBox(width: 24),
+                        _controlBtn(
+                          icon: Icons.forward_10,
+                          size: 36,
+                          onTap: _seekForward,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-              // ── Barra de progreso + tiempo + fullscreen (abajo) ──
+              // ── Barra de progreso (abajo) ──
               AnimatedOpacity(
                 opacity: _showControls ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: IgnorePointer(
                   ignoring: !_showControls,
-                  child: Positioned.fill(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                  child: Align(
+                    // ← Align directo, sin Positioned.fill
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black87, Colors.transparent],
                         ),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [Colors.black87, Colors.transparent],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              activeTrackColor: Colors.red,
+                              inactiveTrackColor: Colors.white30,
+                              thumbColor: Colors.red,
+                              overlayColor: Colors.red.withOpacity(0.2),
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 6,
+                              ),
+                              trackHeight: 3,
+                            ),
+                            child: Slider(
+                              value: progress.clamp(0.0, 1.0),
+                              onChanged: (val) {
+                                final newPos = Duration(
+                                  milliseconds: (val * duration.inMilliseconds)
+                                      .round(),
+                                );
+                                _controller!.seekTo(newPos);
+                                _startHideControlsTimer();
+                              },
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Slider de progreso
-                            SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: Colors.red,
-                                inactiveTrackColor: Colors.white30,
-                                thumbColor: Colors.red,
-                                overlayColor: Colors.red.withOpacity(0.2),
-                                thumbShape: const RoundSliderThumbShape(
-                                  enabledThumbRadius: 6,
+                          Row(
+                            children: [
+                              Text(
+                                '${_formatDuration(position)} / ${_formatDuration(duration)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
                                 ),
-                                trackHeight: 3,
                               ),
-                              child: Slider(
-                                value: progress.clamp(0.0, 1.0),
-                                onChanged: (val) {
-                                  final newPos = Duration(
-                                    milliseconds:
-                                        (val * duration.inMilliseconds).round(),
-                                  );
-                                  _controller!.seekTo(newPos);
-                                  _startHideControlsTimer();
-                                },
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _toggleFullScreen,
+                                child: Icon(
+                                  _isFullScreen
+                                      ? Icons.fullscreen_exit
+                                      : Icons.fullscreen,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
                               ),
-                            ),
-                            // Tiempo + botón fullscreen
-                            Row(
-                              children: [
-                                Text(
-                                  '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const Spacer(),
-                                GestureDetector(
-                                  onTap: _toggleFullScreen,
-                                  child: Icon(
-                                    _isFullScreen
-                                        ? Icons.fullscreen_exit
-                                        : Icons.fullscreen,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),

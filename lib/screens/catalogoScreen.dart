@@ -168,12 +168,12 @@ class _catalogoScreenState extends State<catalogoScreen>
                 style: const TextStyle(color: Colors.white),
                 items: const [
                   DropdownMenuItem(value: 'todos', child: Text('Todos')),
-                  DropdownMenuItem(value: 'Tendencia', child: Text('Tendencia')),
-                  DropdownMenuItem(value: 'Acción', child: Text('Acción')),
                   DropdownMenuItem(
-                    value: 'Miedo',
-                    child: Text('Miedo'),
+                    value: 'Tendencia',
+                    child: Text('Tendencia'),
                   ),
+                  DropdownMenuItem(value: 'Acción', child: Text('Acción')),
+                  DropdownMenuItem(value: 'Miedo', child: Text('Miedo')),
                   DropdownMenuItem(value: 'Aventura', child: Text('Aventura')),
                   DropdownMenuItem(value: 'Clásica', child: Text('Clásica')),
                 ],
@@ -231,7 +231,12 @@ class ListarVideos extends StatelessWidget {
           if (snapshot.hasData && snapshot.data!.isNotEmpty) {
             final data = snapshot.data!;
             return ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.fromLTRB(
+                12,
+                12,
+                12,
+                12 + MediaQuery.of(context).padding.bottom,
+              ),
               itemCount: data.length,
               itemBuilder: (context, index) {
                 final item = data[index];
@@ -556,9 +561,9 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
   Future<void> _launchVideoCompleto(String? videoUrl) async {
     print('Video completo URL: "$videoUrl"');
     if (videoUrl == null || videoUrl.isEmpty || videoUrl == 'null') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay video disponible')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No hay video disponible')));
       return;
     }
 
@@ -566,7 +571,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     final fixedUrl = videoUrl.replaceAll('dl=0', 'raw=1');
     final uri = Uri.parse(fixedUrl);
     print('Abriendo video completo: $uri');
-   
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -588,7 +593,7 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
     final fixedUrl = trailerUrl.replaceAll('dl=0', 'raw=1');
     final uri = Uri.parse(fixedUrl);
     print('Abriendo trailer: $uri');
-   
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -686,11 +691,18 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () => _launchVideoCompleto(videoCompletoUrl),
-                          icon: const Icon(Icons.play_circle, color: Colors.white),
+                          onPressed: () =>
+                              _launchVideoCompleto(videoCompletoUrl),
+                          icon: const Icon(
+                            Icons.play_circle,
+                            color: Colors.white,
+                          ),
                           label: const Text(
                             'Ver película completa',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color.fromARGB(255, 110, 31, 93),
@@ -721,7 +733,9 @@ class _VideoDetalleModalState extends State<VideoDetalleModal> {
                                     });
                                   },
                                   child: AnimatedOpacity(
-                                    opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
+                                    opacity: _controller!.value.isPlaying
+                                        ? 0.0
+                                        : 1.0,
                                     duration: const Duration(milliseconds: 300),
                                     child: Container(
                                       width: 64,

@@ -279,7 +279,12 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 5),
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 350),
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        24,
+                        24,
+                        24 + MediaQuery.of(context).padding.bottom,
+                      ),
                       child: SingleChildScrollView(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,

@@ -138,9 +138,13 @@ class _homeScreenState extends State<homeScreen> {
 
           SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.fromLTRB(
+                24,
+                24,
+                24,
+                24 + MediaQuery.of(context).padding.bottom,
+              ),
               child: Column(
-                
                 children: [
                   const Center(
                     child: Text(
@@ -165,7 +169,7 @@ class _homeScreenState extends State<homeScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // CONTAINER PRINCIPAL CON FOTO 
+                  // CONTAINER PRINCIPAL CON FOTO
                   Container(
                     constraints: const BoxConstraints(maxWidth: 350),
                     padding: const EdgeInsets.all(32),
@@ -182,16 +186,13 @@ class _homeScreenState extends State<homeScreen> {
                     ),
                     child: Column(
                       children: [
-                        // FOTO DE PERFIL NUEVA 
+                        // FOTO DE PERFIL NUEVA
                         Container(
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 3,
-                            ),
+                            border: Border.all(color: Colors.white, width: 3),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black54,
@@ -201,7 +202,8 @@ class _homeScreenState extends State<homeScreen> {
                             ],
                           ),
                           child: ClipOval(
-                            child: usuarioData?['perfil_url'] != null &&
+                            child:
+                                usuarioData?['perfil_url'] != null &&
                                     usuarioData!['perfil_url'].isNotEmpty
                                 ? Image.network(
                                     usuarioData!['perfil_url'],
@@ -215,14 +217,16 @@ class _homeScreenState extends State<homeScreen> {
                                         color: Colors.white70,
                                       );
                                     },
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return const Center(
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                        ),
-                                      );
-                                    },
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                          if (loadingProgress == null)
+                                            return child;
+                                          return const Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
+                                          );
+                                        },
                                   )
                                 : const Icon(
                                     Icons.person,
@@ -298,7 +302,8 @@ class _homeScreenState extends State<homeScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/catalogo'),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/catalogo'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
                         'Revisar catálogo',
@@ -314,14 +319,20 @@ class _homeScreenState extends State<homeScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/agregarPelicula'),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/agregarPelicula'),
                       icon: const Icon(Icons.movie, color: Colors.white),
                       label: const Text(
                         'Agregar nuevas películas',
                         style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 167, 45, 158),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          167,
+                          45,
+                          158,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),

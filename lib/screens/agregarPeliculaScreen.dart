@@ -69,7 +69,7 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
     try {
       // Portada: URL normal (sin conversión)
       final portadaUrlFinal = portadaUrl.text.trim();
-      
+
       // Video: solo convertir si es Dropbox
       final videoUrlFinal = _convertirDropboxUrl(videoUrl.text.trim());
 
@@ -153,7 +153,12 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              16 + MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -185,7 +190,10 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                     prefixIcon: const Icon(Icons.image, color: Colors.white70),
                     suffixIcon: portadaUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               portadaUrl.clear();
                               setState(() {});
@@ -219,7 +227,10 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                     prefixIcon: const Icon(Icons.movie, color: Colors.white70),
                     suffixIcon: videoUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               videoUrl.clear();
                               setState(() {});
@@ -253,7 +264,10 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                     prefixIcon: const Icon(Icons.link, color: Colors.white70),
                     suffixIcon: trailerUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               trailerUrl.clear();
                               setState(() {});
@@ -318,7 +332,10 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                   controller: edadRecomendada,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.confirmation_number, color: Colors.white70),
+                    prefixIcon: Icon(
+                      Icons.confirmation_number,
+                      color: Colors.white70,
+                    ),
                     border: OutlineInputBorder(),
                     labelText: "Edad recomendada",
                     labelStyle: TextStyle(color: labelColor),
@@ -342,11 +359,17 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                       items: const [
                         DropdownMenuItem(
                           value: true,
-                          child: Text('Pública', style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Pública',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: false,
-                          child: Text('Privada', style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Privada',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                       onChanged: (val) {
@@ -372,11 +395,23 @@ class _AgregarpeliculascreenState extends State<Agregarpeliculascreen> {
                       dropdownColor: Colors.black87,
                       style: const TextStyle(color: Colors.white),
                       items: const [
-                        DropdownMenuItem(value: 'Tendencia', child: Text('Tendencia')),
-                        DropdownMenuItem(value: 'Acción', child: Text('Acción')),
+                        DropdownMenuItem(
+                          value: 'Tendencia',
+                          child: Text('Tendencia'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Acción',
+                          child: Text('Acción'),
+                        ),
                         DropdownMenuItem(value: 'Miedo', child: Text('Miedo')),
-                        DropdownMenuItem(value: 'Aventura', child: Text('Aventura')),
-                        DropdownMenuItem(value: 'Clásica', child: Text('Clásica')),
+                        DropdownMenuItem(
+                          value: 'Aventura',
+                          child: Text('Aventura'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Clásica',
+                          child: Text('Clásica'),
+                        ),
                       ],
                       onChanged: (val) {
                         if (val != null) {

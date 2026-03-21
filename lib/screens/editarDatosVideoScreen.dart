@@ -40,13 +40,13 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
         titulo.text = videoData!['titulo'] ?? '';
         descripcion.text = videoData!['descripcion'] ?? '';
         duracion.text = videoData!['duracion']?.toString() ?? '';
-        edadRecomendada.text =
-            videoData!['edad_recomendada']?.toString() ?? '';
+        edadRecomendada.text = videoData!['edad_recomendada']?.toString() ?? '';
         trailerUrl.text = videoData!['trailer_url'] ?? '';
         portadaUrl.text = videoData!['portada_url'] ?? '';
         videoUrl.text = videoData!['video_url'] ?? '';
         _esPublica =
-            videoData!['es_publica'] == true || videoData!['es_publica'] == 'true';
+            videoData!['es_publica'] == true ||
+            videoData!['es_publica'] == 'true';
         _categoriaSeleccionada = videoData!['categoria'] ?? 'Tendencia';
 
         setState(() {});
@@ -187,7 +187,12 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              16 + MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               children: [
                 const Text(
@@ -198,7 +203,7 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
-                ),   
+                ),
                 const SizedBox(height: 24),
 
                 // PORTADA URL
@@ -218,7 +223,10 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     prefixIcon: const Icon(Icons.image, color: Colors.white70),
                     suffixIcon: portadaUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               portadaUrl.clear();
                               setState(() {});
@@ -252,7 +260,10 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     prefixIcon: const Icon(Icons.movie, color: Colors.white70),
                     suffixIcon: videoUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               videoUrl.clear();
                               setState(() {});
@@ -286,7 +297,10 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                     prefixIcon: const Icon(Icons.link, color: Colors.white70),
                     suffixIcon: trailerUrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white70,
+                            ),
                             onPressed: () {
                               trailerUrl.clear();
                               setState(() {});
@@ -321,8 +335,7 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                   controller: descripcion,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    prefixIcon:
-                        Icon(Icons.description, color: Colors.white70),
+                    prefixIcon: Icon(Icons.description, color: Colors.white70),
                     border: OutlineInputBorder(),
                     labelText: "Descripción",
                     labelStyle: TextStyle(color: labelColor),
@@ -352,8 +365,10 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                   controller: edadRecomendada,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.confirmation_number,
-                        color: Colors.white70),
+                    prefixIcon: Icon(
+                      Icons.confirmation_number,
+                      color: Colors.white70,
+                    ),
                     border: OutlineInputBorder(),
                     labelText: "Edad recomendada",
                     labelStyle: TextStyle(color: labelColor),
@@ -377,13 +392,17 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                       items: const [
                         DropdownMenuItem(
                           value: true,
-                          child: Text('Pública',
-                              style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Pública',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: false,
-                          child: Text('Privada',
-                              style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Privada',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                       onChanged: (val) {
@@ -410,15 +429,22 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                       style: const TextStyle(color: Colors.white),
                       items: const [
                         DropdownMenuItem(
-                            value: 'Tendencia', child: Text('Tendencia')),
+                          value: 'Tendencia',
+                          child: Text('Tendencia'),
+                        ),
                         DropdownMenuItem(
-                            value: 'Acción', child: Text('Acción')),
+                          value: 'Acción',
+                          child: Text('Acción'),
+                        ),
+                        DropdownMenuItem(value: 'Miedo', child: Text('Miedo')),
                         DropdownMenuItem(
-                            value: 'Miedo', child: Text('Miedo')),
+                          value: 'Aventura',
+                          child: Text('Aventura'),
+                        ),
                         DropdownMenuItem(
-                            value: 'Aventura', child: Text('Aventura')),
-                        DropdownMenuItem(
-                            value: 'Clásica', child: Text('Clásica')),
+                          value: 'Clásica',
+                          child: Text('Clásica'),
+                        ),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -436,8 +462,7 @@ class _EditardatosvideoscreenState extends State<Editardatosvideoscreen> {
                   child: ElevatedButton(
                     onPressed: actualizarVideo,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color.fromARGB(255, 110, 31, 93),
+                      backgroundColor: const Color.fromARGB(255, 110, 31, 93),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: const Text(
