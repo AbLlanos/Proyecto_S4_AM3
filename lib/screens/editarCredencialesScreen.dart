@@ -4,13 +4,16 @@ import 'package:proyecto_s4_am3/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 
+
 class editarCredencialesScreen extends StatefulWidget {
   const editarCredencialesScreen({super.key});
+
 
   @override
   State<editarCredencialesScreen> createState() =>
       _editarCredencialesScreenState();
 }
+
 
 class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
   Uint8List? _perfilBytes;
@@ -18,15 +21,29 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
   Map<String, dynamic>? _userData;
   bool _cargando = true;
 
+
   static const double maxImageSizeBytes = 2 * 1024 * 1024;
 
-  // Controladores prellenados
+
   final TextEditingController _nombre = TextEditingController();
   final TextEditingController _telefono = TextEditingController();
-  final TextEditingController _pais = TextEditingController();
   final TextEditingController _fechaNacimiento = TextEditingController();
   final TextEditingController _nuevaContrasenia = TextEditingController();
   final TextEditingController _confirmarContrasenia = TextEditingController();
+
+
+  // ── Dropdown país ──
+  String? _paisSeleccionado;
+
+  static const List<String> _paises = [
+    'Argentina', 'Bolivia', 'Brasil', 'Canadá', 'Chile',
+    'Colombia', 'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador',
+    'España', 'Estados Unidos', 'Francia', 'Guatemala', 'Honduras',
+    'Italia', 'Jamaica', 'México', 'Nicaragua', 'Panamá',
+    'Paraguay', 'Perú', 'Portugal', 'Puerto Rico', 'República Dominicana',
+    'Uruguay', 'Venezuela', 'Alemania', 'Japón', 'China',
+  ];
+
 
   @override
   void initState() {
@@ -34,20 +51,22 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
     _cargarDatosActuales();
   }
 
+
   @override
   void dispose() {
     _nombre.dispose();
     _telefono.dispose();
-    _pais.dispose();
     _fechaNacimiento.dispose();
     _nuevaContrasenia.dispose();
     _confirmarContrasenia.dispose();
     super.dispose();
   }
 
+
   Future<void> _cargarDatosActuales() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
+
 
     final response = await supabase
         .from('usuariosVix')
@@ -55,13 +74,18 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
         .eq('id', user.id)
         .maybeSingle();
 
+
     if (mounted && response != null) {
       setState(() {
         _userData = response;
         _nombre.text = response['nombre'] ?? '';
         _telefono.text = response['telefono'] ?? '';
-        _pais.text = response['pais'] ?? '';
         _fechaNacimiento.text = response['fechaNacimiento'] ?? '';
+
+        // Prellenar dropdown verificando que el valor exista en la lista
+        final paisGuardado = response['pais'] ?? '';
+        _paisSeleccionado = _paises.contains(paisGuardado) ? paisGuardado : null;
+
         _cargando = false;
       });
     } else {
@@ -69,12 +93,14 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
     }
   }
 
+
   Future<void> _pickPerfil() async {
     final res = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
     );
     if (res == null || res.files.single.bytes == null) return;
+
 
     final file = res.files.single;
     if (file.size.toDouble() > maxImageSizeBytes) {
@@ -96,15 +122,59 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
       return;
     }
 
+
     setState(() {
       _perfilBytes = file.bytes;
       _perfilExt = file.extension ?? 'jpg';
     });
   }
 
+
+  // ── Date picker ──
+  Future<void> _seleccionarFecha() async {
+    DateTime initialDate = DateTime(2000, 1, 1);
+    try {
+      if (_fechaNacimiento.text.isNotEmpty) {
+        initialDate = DateTime.parse(_fechaNacimiento.text);
+      }
+    } catch (_) {}
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color.fromARGB(255, 110, 31, 93),
+              onPrimary: Colors.white,
+              surface: Color(0xFF2A2A2A),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && mounted) {
+      final texto =
+          '${picked.year.toString().padLeft(4, '0')}-'
+          '${picked.month.toString().padLeft(2, '0')}-'
+          '${picked.day.toString().padLeft(2, '0')}';
+      setState(() {
+        _fechaNacimiento.text = texto;
+      });
+    }
+  }
+
+
   Future<void> _guardarCambios() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
+
 
     final tel = _telefono.text.trim();
     if (tel.isNotEmpty) {
@@ -117,6 +187,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
         return;
       }
     }
+
 
     if (_nuevaContrasenia.text.isNotEmpty) {
       if (_nuevaContrasenia.text != _confirmarContrasenia.text) {
@@ -135,6 +206,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
       }
     }
 
+
     try {
       String? nuevaPerfilUrl;
       if (_perfilBytes != null && _perfilExt != null) {
@@ -146,26 +218,28 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
         print('URL guardada en BD: $nuevaPerfilUrl');
       }
 
+
       final updateData = <String, dynamic>{
         'nombre': _nombre.text.trim(),
         'telefono': tel,
-        'pais': _pais.text.trim(),
+        'pais': _paisSeleccionado ?? '',        // ✅ usa el dropdown
         'fechaNacimiento': _fechaNacimiento.text.trim(),
         if (nuevaPerfilUrl != null) 'perfil_url': nuevaPerfilUrl,
       };
 
+
       await supabase.from('usuariosVix').update(updateData).eq('id', user.id);
 
-      // Limpiar caché de imágenes de Flutter
+
       PaintingBinding.instance.imageCache.clear();
-      // Limpiar caché de imágenes de Flutter
-      PaintingBinding.instance.imageCache.clear();
+
 
       if (_nuevaContrasenia.text.isNotEmpty) {
         await supabase.auth.updateUser(
           UserAttributes(password: _nuevaContrasenia.text.trim()),
         );
       }
+
 
       if (mounted) {
         await _showDialog(
@@ -179,6 +253,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
     }
   }
 
+
   Future<String?> _subirImagenPerfil(
     String userId,
     Uint8List imageBytes,
@@ -187,11 +262,11 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
     try {
       final bucket = supabase.storage.from('vixDocumentaryRepository');
 
-      // Nombre único con timestamp para romper caché
+
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final path = 'usuarios/$userId/perfil_$timestamp.$ext';
 
-      // Intentar borrar archivos de perfil anteriores
+
       try {
         final List<FileObject> existentes = await bucket.list(
           path: 'usuarios/$userId',
@@ -203,16 +278,15 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
         if (viejos.isNotEmpty) {
           await bucket.remove(viejos);
         }
-      } catch (_) {
-        // Si no puede listar/borrar, continúa igual
-      }
+      } catch (_) {}
 
-      // Subir nueva imagen
+
       await bucket.uploadBinary(
         path,
         imageBytes,
         fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
       );
+
 
       final url = bucket.getPublicUrl(path);
       print('Nueva URL de perfil: $url');
@@ -222,6 +296,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
       return null;
     }
   }
+
 
   Future<void> _showDialog(String titulo, String contenido) async {
     await showDialog(
@@ -239,11 +314,13 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     const primaryPurple = Color.fromARGB(255, 110, 31, 93);
     const fieldColor = Color.fromARGB(197, 116, 116, 116);
     const labelColor = Colors.white;
+
 
     return Scaffold(
       appBar: AppBar(
@@ -257,7 +334,6 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
       ),
       body: Stack(
         children: [
-          // Fondo igual al registro
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -269,6 +345,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
             ),
             child: Container(color: const Color(0xAA000000)),
           ),
+
 
           _cargando
               ? const Center(
@@ -289,7 +366,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ── Foto de perfil actual / nueva ──
+                            // ── Foto de perfil ──
                             Center(
                               child: Stack(
                                 children: [
@@ -351,6 +428,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                               ),
                             const SizedBox(height: 20),
 
+
                             // ── Correo (solo lectura) ──
                             TextField(
                               readOnly: true,
@@ -377,23 +455,22 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                             ),
                             const SizedBox(height: 12),
 
+
                             // ── Nombre ──
                             TextField(
                               controller: _nombre,
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.person,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.person, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'Nombre',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
                               ),
                             ),
                             const SizedBox(height: 12),
+
 
                             // ── Teléfono ──
                             TextField(
@@ -401,56 +478,71 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                               keyboardType: TextInputType.number,
                               maxLength: 10,
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 counterText: '',
-                                prefixIcon: const Icon(
-                                  Icons.phone,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.phone, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'Teléfono (10 dígitos)',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
                               ),
                             ),
                             const SizedBox(height: 12),
 
-                            // ── País ──
-                            TextField(
-                              controller: _pais,
+
+                            // ── País — Dropdown ──
+                            DropdownButtonFormField<String>(
+                              value: _paisSeleccionado,
+                              dropdownColor: const Color(0xFF2A2A2A),
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.public,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.public, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'País',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
                               ),
+                              hint: const Text(
+                                'Selecciona tu país',
+                                style: TextStyle(color: Colors.white54),
+                              ),
+                              items: _paises.map((pais) {
+                                return DropdownMenuItem<String>(
+                                  value: pais,
+                                  child: Text(
+                                    pais,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() => _paisSeleccionado = value);
+                              },
                             ),
                             const SizedBox(height: 12),
 
-                            // ── Fecha de nacimiento ──
+
+                            // ── Fecha de nacimiento — Date picker ──
                             TextField(
                               controller: _fechaNacimiento,
+                              readOnly: true,
+                              onTap: _seleccionarFecha,
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.calendar_today, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'Fecha de nacimiento',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
+                                hintText: 'Toca para seleccionar',
+                                hintStyle: TextStyle(color: Colors.white38),
                               ),
                             ),
                             const SizedBox(height: 20),
+
 
                             // ── Sección contraseña ──
                             const Align(
@@ -466,51 +558,45 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                             ),
                             const SizedBox(height: 8),
 
+
                             TextField(
                               controller: _nuevaContrasenia,
                               obscureText: true,
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.lock,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'Nueva contraseña',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
                               ),
                             ),
                             const SizedBox(height: 12),
 
+
                             TextField(
                               controller: _confirmarContrasenia,
                               obscureText: true,
                               style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(
-                                  Icons.lock_outline,
-                                  color: Colors.white70,
-                                ),
-                                border: const OutlineInputBorder(),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.lock_outline, color: Colors.white70),
+                                border: OutlineInputBorder(),
                                 labelText: 'Confirmar nueva contraseña',
-                                labelStyle: const TextStyle(color: labelColor),
+                                labelStyle: TextStyle(color: labelColor),
                                 filled: true,
                                 fillColor: fieldColor,
                               ),
                             ),
                             const SizedBox(height: 28),
 
+
                             // ── Botón guardar ──
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: _guardarCambios,
-                                icon: const Icon(
-                                  Icons.save,
-                                  color: Colors.white,
-                                ),
+                                icon: const Icon(Icons.save, color: Colors.white),
                                 label: const Text(
                                   'Guardar cambios',
                                   style: TextStyle(
@@ -521,9 +607,7 @@ class _editarCredencialesScreenState extends State<editarCredencialesScreen> {
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primaryPurple,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
